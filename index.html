@@ -332,11 +332,9 @@
     transition: all 0.3s;
     position: relative;
     margin-top: 4px;
+    display: block;
   }
   .upload-area:hover { border-color: var(--gold); background: var(--gold-dim); }
-  .upload-area input[type="file"] {
-    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
-  }
   .upload-icon {
     width: 24px; height: 24px;
     border: 1px solid var(--gold-border);
@@ -1006,7 +1004,7 @@
       <div class="field">
         <label class="field-label">Captura de estadísticas</label>
         <div class="upload-area" onclick="document.getElementById('upload-stats').click()">
-          <input type="file" id="upload-stats" accept="image/*" onchange="previewImage(this,'prev-stats')">
+          <input type="file" id="upload-stats" accept="image/*" style="display:none" onchange="previewImage(this,'prev-stats')">
           <div class="upload-icon">+</div>
           <div class="upload-label">Subir captura</div>
           <img class="upload-preview" id="prev-stats">
@@ -1031,7 +1029,7 @@
     <div class="field">
       <label class="field-label">Fotografía frontal</label>
       <div class="upload-area" onclick="document.getElementById('upload-frontal').click()">
-        <input type="file" id="upload-frontal" accept="image/*" onchange="previewImage(this,'prev-frontal')">
+        <input type="file" id="upload-frontal" accept="image/*" style="display:none" onchange="previewImage(this,'prev-frontal')">
         <div class="upload-icon">+</div>
         <div class="upload-label">Subir foto frontal</div>
         <img class="upload-preview" id="prev-frontal">
@@ -1041,7 +1039,7 @@
     <div class="field">
       <label class="field-label">Fotografía lateral</label>
       <div class="upload-area" onclick="document.getElementById('upload-lateral').click()">
-        <input type="file" id="upload-lateral" accept="image/*" onchange="previewImage(this,'prev-lateral')">
+        <input type="file" id="upload-lateral" accept="image/*" style="display:none" onchange="previewImage(this,'prev-lateral')">
         <div class="upload-icon">+</div>
         <div class="upload-label">Subir foto lateral</div>
         <img class="upload-preview" id="prev-lateral">
@@ -1050,7 +1048,7 @@
     <div class="field">
       <label class="field-label">Fotografía de tu cabello actual</label>
       <div class="upload-area" onclick="document.getElementById('upload-cabello').click()">
-        <input type="file" id="upload-cabello" accept="image/*" onchange="previewImage(this,'prev-cabello')">
+        <input type="file" id="upload-cabello" accept="image/*" style="display:none" onchange="previewImage(this,'prev-cabello')">
         <div class="upload-icon">+</div>
         <div class="upload-label">Subir foto de cabello</div>
         <img class="upload-preview" id="prev-cabello">
@@ -1264,8 +1262,8 @@
 <button class="admin-toggle" id="adminBtn" onclick="showPinModal()" title="Panel Admin">⚙</button>
 
 <script>
-const SUPABASE_URL = 'https://igtnywkyqihxsoxmasql.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_DefnRW6VNXo7xm2LK-_ctA_ASNdsS0C';
+const SUPABASE_URL = 'https://nfooncnnmgehpooraogv.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_2YGGUcpFY0EDoprTS04uYQ_DHwEQKCz';
 
 let currentStep = 0;
 let allModels = [];
@@ -1573,6 +1571,9 @@ function openModel(id) {
       <button class="btn-status btn-seleccionar" onclick="updateStatus('seleccionada')">SELECCIONAR</button>
       <button class="btn-status btn-descartar" onclick="updateStatus('descartada')">DESCARTAR</button>
     </div>
+    <div style="margin-top:16px;text-align:center;padding-top:16px;border-top:1px solid rgba(255,255,255,0.08)">
+      <button onclick="deleteModel()" style="background:transparent;border:1px solid #c0392b;color:#c0392b;font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;padding:10px 24px;width:100%;transition:all 0.3s">🗑 ELIMINAR PERFIL</button>
+    </div>
   `;
 
   document.getElementById('modal-overlay').classList.add('show');
@@ -1653,6 +1654,23 @@ function updatePinDots() {
   for (let i = 1; i <= 6; i++) {
     const dot = document.getElementById("pd" + i);
     dot.classList.toggle("filled", i <= pinEntry.length);
+  }
+}
+
+async function deleteModel() {
+  if (!confirm('¿Eliminar este perfil permanentemente?')) return;
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/modelos?id=eq.${selectedModelId}`, {
+    method: 'DELETE',
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`
+    }
+  });
+  if (res.ok) {
+    allModels = allModels.filter(x => x.id !== selectedModelId);
+    showToast('Perfil eliminado');
+    closeModal();
+    filterModels();
   }
 }
 
