@@ -1,1 +1,1697 @@
-# mondou-modelos
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Modelo Mondou</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Montserrat:wght@200;300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #000000;
+    --gold: #C9A84C;
+    --gold-light: #E2C77A;
+    --gold-dim: rgba(201,168,76,0.15);
+    --gold-border: rgba(201,168,76,0.3);
+    --white: #ffffff;
+    --gray: rgba(255,255,255,0.5);
+    --gray-dim: rgba(255,255,255,0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    background: var(--black);
+    color: var(--white);
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* GRAIN OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.4;
+  }
+
+  /* SCREENS */
+  .screen {
+    display: none;
+    min-height: 100vh;
+    flex-direction: column;
+    animation: fadeIn 0.8s ease;
+  }
+  .screen.active { display: flex; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* PROGRESS BAR */
+  .progress-bar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: var(--gold-border);
+    z-index: 100;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light));
+    transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+  }
+  .progress-dots {
+    position: fixed;
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 100;
+  }
+  .dot {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--gold-border);
+    transition: background 0.4s;
+  }
+  .dot.active { background: var(--gold); }
+
+  /* WELCOME SCREEN */
+  #screen-welcome {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 60px 40px;
+    position: relative;
+  }
+
+  .welcome-inner { max-width: 360px; }
+
+  .logo-mark {
+    display: inline-block;
+    width: 64px; height: 64px;
+    border: 1px solid var(--gold-border);
+    border-radius: 50%;
+    margin-bottom: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .logo-mark::before {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    border: 1px solid var(--gold-dim);
+    border-radius: 50%;
+  }
+  .logo-mark-letter {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 300;
+    color: var(--gold);
+    letter-spacing: 2px;
+  }
+
+  .brand-name {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 200;
+    font-size: 10px;
+    letter-spacing: 6px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 40px;
+  }
+
+  .welcome-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 42px;
+    font-weight: 300;
+    letter-spacing: 4px;
+    line-height: 1.1;
+    margin-bottom: 28px;
+    color: var(--white);
+  }
+
+  .welcome-subtitle {
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 1px;
+    line-height: 1.9;
+    color: var(--gray);
+    margin-bottom: 48px;
+  }
+
+  .divider {
+    width: 40px;
+    height: 1px;
+    background: var(--gold-border);
+    margin: 32px auto;
+  }
+
+  .welcome-note {
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    line-height: 2;
+    color: rgba(255,255,255,0.3);
+    margin-bottom: 56px;
+  }
+
+  /* BUTTONS */
+  .btn-primary {
+    display: inline-block;
+    padding: 18px 48px;
+    border: 1px solid var(--gold);
+    background: transparent;
+    color: var(--gold);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 9px;
+    font-weight: 400;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn-primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--gold);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s ease;
+    z-index: -1;
+  }
+  .btn-primary:hover::before, .btn-primary:active::before { transform: scaleX(1); }
+  .btn-primary:hover, .btn-primary:active { color: var(--black); }
+
+  .btn-ghost {
+    display: inline-block;
+    padding: 14px 32px;
+    border: none;
+    background: transparent;
+    color: var(--gray);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 9px;
+    font-weight: 400;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.3s;
+  }
+  .btn-ghost:hover { color: var(--white); }
+
+  /* FORM SCREENS */
+  .form-screen {
+    padding: 80px 32px 48px;
+    max-width: 480px;
+    margin: 0 auto;
+    width: 100%;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .step-label {
+    font-size: 8px;
+    letter-spacing: 4px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  .step-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 300;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+    line-height: 1.2;
+  }
+
+  .step-subtitle {
+    font-size: 10px;
+    color: var(--gray);
+    letter-spacing: 1px;
+    line-height: 1.8;
+    margin-bottom: 40px;
+  }
+
+  /* FIELDS */
+  .field {
+    margin-bottom: 28px;
+    position: relative;
+  }
+
+  .field-label {
+    display: block;
+    font-size: 8px;
+    letter-spacing: 3px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .field-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--gold-border);
+    padding: 12px 0;
+    color: var(--white);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 14px;
+    font-weight: 300;
+    letter-spacing: 0.5px;
+    outline: none;
+    transition: border-color 0.3s;
+    -webkit-appearance: none;
+  }
+  .field-input:focus { border-color: var(--gold); }
+  .field-input::placeholder { color: rgba(255,255,255,0.2); font-size: 12px; }
+  .field-input::-webkit-calendar-picker-indicator { filter: invert(1) opacity(0.4); }
+
+  .field-input.error { border-color: #c0392b; }
+  .field-error { font-size: 9px; color: #c0392b; letter-spacing: 1px; margin-top: 6px; display: none; }
+  .field-error.show { display: block; }
+
+  /* RADIO GROUPS */
+  .radio-group {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+  }
+
+  .radio-option {
+    flex: 1;
+    min-width: 80px;
+  }
+
+  .radio-option input { display: none; }
+
+  .radio-option label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 16px;
+    border: 1px solid var(--gold-border);
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gray);
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+  }
+
+  .radio-option input:checked + label {
+    border-color: var(--gold);
+    color: var(--gold);
+    background: var(--gold-dim);
+  }
+
+  /* UPLOAD AREA */
+  .upload-area {
+    border: 1px dashed var(--gold-border);
+    padding: 28px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    margin-top: 4px;
+  }
+  .upload-area:hover { border-color: var(--gold); background: var(--gold-dim); }
+  .upload-area input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .upload-icon {
+    width: 24px; height: 24px;
+    border: 1px solid var(--gold-border);
+    border-radius: 50%;
+    margin: 0 auto 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; color: var(--gold);
+  }
+  .upload-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--gray);
+    text-transform: uppercase;
+  }
+  .upload-preview {
+    width: 60px; height: 60px;
+    object-fit: cover;
+    border: 1px solid var(--gold-border);
+    margin: 8px auto 0;
+    display: none;
+  }
+  .upload-preview.show { display: block; }
+
+  /* CONDITIONAL SECTION */
+  .conditional-section {
+    display: none;
+    padding: 24px 0 0;
+    border-top: 1px solid var(--gold-border);
+    margin-top: 8px;
+  }
+  .conditional-section.show { display: block; }
+
+  /* CHECKBOXES */
+  .checkbox-item {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    padding: 20px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    cursor: pointer;
+  }
+  .checkbox-item:last-child { border-bottom: none; }
+
+  .checkbox-box {
+    width: 18px; height: 18px;
+    border: 1px solid var(--gold-border);
+    flex-shrink: 0;
+    margin-top: 2px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s;
+  }
+  .checkbox-box.checked {
+    border-color: var(--gold);
+    background: var(--gold-dim);
+  }
+  .checkbox-check {
+    width: 8px; height: 8px;
+    background: var(--gold);
+    display: none;
+  }
+  .checkbox-box.checked .checkbox-check { display: block; }
+
+  .checkbox-text {
+    font-size: 11px;
+    font-weight: 300;
+    letter-spacing: 0.5px;
+    line-height: 1.8;
+    color: rgba(255,255,255,0.7);
+  }
+
+  /* NAV BUTTONS */
+  .form-nav {
+    margin-top: auto;
+    padding-top: 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+  }
+
+  /* SUCCESS SCREEN */
+  #screen-success {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 60px 40px;
+  }
+
+  .success-ring {
+    width: 80px; height: 80px;
+    border: 1px solid var(--gold-border);
+    border-radius: 50%;
+    margin: 0 auto 40px;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    animation: ringPulse 2s ease infinite;
+  }
+  .success-ring::before {
+    content: '';
+    position: absolute;
+    inset: -8px;
+    border: 1px solid rgba(201,168,76,0.1);
+    border-radius: 50%;
+    animation: ringPulse 2s ease infinite 0.5s;
+  }
+  .success-check {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    color: var(--gold);
+  }
+
+  @keyframes ringPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(1.02); }
+  }
+
+  .success-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px;
+    font-weight: 300;
+    letter-spacing: 3px;
+    margin-bottom: 20px;
+  }
+
+  .success-text {
+    font-size: 11px;
+    line-height: 2;
+    color: var(--gray);
+    letter-spacing: 0.5px;
+    margin-bottom: 48px;
+    max-width: 320px;
+  }
+
+  /* ADMIN SCREEN */
+  #screen-admin {
+    flex-direction: column;
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  .admin-header {
+    padding: 24px 24px 20px;
+    border-bottom: 1px solid var(--gold-border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky; top: 0;
+    background: var(--black);
+    z-index: 50;
+  }
+
+  .admin-brand {
+    font-size: 8px;
+    letter-spacing: 5px;
+    color: var(--gold);
+    text-transform: uppercase;
+  }
+
+  .admin-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 300;
+    letter-spacing: 2px;
+  }
+
+  .admin-body { padding: 24px; }
+
+  .filter-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .filter-select {
+    background: var(--gray-dim);
+    border: 1px solid var(--gold-border);
+    color: var(--white);
+    padding: 10px 12px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 9px;
+    letter-spacing: 1px;
+    outline: none;
+    cursor: pointer;
+    -webkit-appearance: none;
+  }
+
+  .filter-input {
+    background: var(--gray-dim);
+    border: 1px solid var(--gold-border);
+    color: var(--white);
+    padding: 10px 12px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px;
+    outline: none;
+    width: 100%;
+    margin-bottom: 10px;
+  }
+  .filter-input::placeholder { color: rgba(255,255,255,0.2); }
+
+  .results-count {
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  /* MODEL CARDS */
+  .models-grid { display: flex; flex-direction: column; gap: 12px; }
+
+  .model-card {
+    border: 1px solid var(--gold-border);
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+  }
+  .model-card:hover { border-color: var(--gold); background: var(--gold-dim); }
+
+  .model-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+
+  .model-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    font-weight: 400;
+    letter-spacing: 1px;
+  }
+
+  .model-status {
+    font-size: 7px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border: 1px solid;
+  }
+  .status-pendiente { border-color: var(--gold-border); color: var(--gold); }
+  .status-seleccionada { border-color: #27ae60; color: #27ae60; }
+  .status-descartada { border-color: #c0392b; color: #c0392b; }
+
+  .model-meta {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .model-tag {
+    font-size: 8px;
+    letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.4);
+    text-transform: uppercase;
+  }
+  .model-tag span { color: rgba(255,255,255,0.7); }
+
+  /* MODEL DETAIL MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.92);
+    z-index: 200;
+    display: none;
+    overflow-y: auto;
+  }
+  .modal-overlay.show { display: block; }
+
+  .modal {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .modal-close {
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--gray);
+    text-transform: uppercase;
+    cursor: pointer;
+    margin-bottom: 32px;
+    display: flex; align-items: center; gap: 8px;
+    background: none; border: none;
+  }
+  .modal-close:hover { color: var(--white); }
+
+  .modal-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 32px;
+    font-weight: 300;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+
+  .modal-city {
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
+
+  .modal-photos {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 32px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  .modal-photo {
+    width: 100px; height: 130px;
+    object-fit: cover;
+    border: 1px solid var(--gold-border);
+    flex-shrink: 0;
+  }
+
+  .modal-section {
+    margin-bottom: 24px;
+  }
+
+  .modal-section-title {
+    font-size: 7px;
+    letter-spacing: 4px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--gold-border);
+  }
+
+  .modal-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .modal-key { font-size: 9px; letter-spacing: 1px; color: var(--gray); }
+  .modal-val { font-size: 11px; font-weight: 300; color: var(--white); }
+
+  .status-buttons {
+    display: flex;
+    gap: 8px;
+    margin-top: 32px;
+  }
+
+  .btn-status {
+    flex: 1;
+    padding: 14px 8px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 8px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: 1px solid;
+    background: transparent;
+    transition: all 0.3s;
+  }
+  .btn-seleccionar { border-color: #27ae60; color: #27ae60; }
+  .btn-seleccionar:hover { background: rgba(39,174,96,0.1); }
+  .btn-descartar { border-color: #c0392b; color: #c0392b; }
+  .btn-descartar:hover { background: rgba(192,57,43,0.1); }
+
+  /* LOADING */
+  .loading-dots {
+    display: flex; gap: 6px; justify-content: center; padding: 40px;
+  }
+  .loading-dot {
+    width: 4px; height: 4px;
+    background: var(--gold);
+    border-radius: 50%;
+    animation: bounce 1.2s ease infinite;
+  }
+  .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+  .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); opacity: 0.3; }
+    50% { transform: translateY(-6px); opacity: 1; }
+  }
+
+  /* ADMIN TOGGLE */
+  .admin-toggle {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: var(--gold);
+    color: var(--black);
+    border: none;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    font-size: 16px;
+    cursor: pointer;
+    z-index: 90;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 500;
+    box-shadow: 0 4px 20px rgba(201,168,76,0.3);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--gray);
+    font-size: 11px;
+    letter-spacing: 1px;
+    line-height: 2;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 80px; left: 50%; transform: translateX(-50%);
+    background: var(--gold);
+    color: var(--black);
+    padding: 12px 24px;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    z-index: 300;
+    opacity: 0;
+    transition: opacity 0.3s;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+
+  /* PIN MODAL */
+  .pin-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.96);
+    z-index: 400;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    animation: fadeIn 0.4s ease;
+  }
+  .pin-overlay.show { display: flex; }
+
+  .pin-box {
+    text-align: center;
+    padding: 48px 40px;
+    max-width: 320px;
+    width: 100%;
+  }
+
+  .pin-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 300;
+    letter-spacing: 3px;
+    margin-bottom: 8px;
+  }
+
+  .pin-subtitle {
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-bottom: 40px;
+  }
+
+  .pin-dots {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    margin-bottom: 32px;
+  }
+
+  .pin-dot {
+    width: 12px; height: 12px;
+    border: 1px solid var(--gold-border);
+    border-radius: 50%;
+    transition: all 0.2s;
+  }
+  .pin-dot.filled {
+    background: var(--gold);
+    border-color: var(--gold);
+  }
+  .pin-dot.error {
+    background: #c0392b;
+    border-color: #c0392b;
+  }
+
+  .pin-keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    max-width: 240px;
+    margin: 0 auto 24px;
+  }
+
+  .pin-key {
+    aspect-ratio: 1;
+    border: 1px solid var(--gold-border);
+    background: transparent;
+    color: var(--white);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 18px;
+    font-weight: 200;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pin-key:hover, .pin-key:active {
+    border-color: var(--gold);
+    background: var(--gold-dim);
+    color: var(--gold);
+  }
+  .pin-key.del { font-size: 14px; color: var(--gray); }
+  .pin-key.empty { border: none; cursor: default; }
+  .pin-key.empty:hover { background: transparent; }
+
+  .pin-cancel {
+    font-size: 8px;
+    letter-spacing: 3px;
+    color: var(--gray);
+    text-transform: uppercase;
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  .pin-cancel:hover { color: var(--white); }
+
+  @media (min-width: 480px) {
+    .filter-row { grid-template-columns: 1fr 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- WELCOME -->
+<div class="screen active" id="screen-welcome">
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;">
+    <div class="welcome-inner">
+      <div style="display:flex;justify-content:center;margin-bottom:48px;">
+        <div class="logo-mark">
+          <span class="logo-mark-letter">M</span>
+        </div>
+      </div>
+      <div class="brand-name">Mondou</div>
+      <h1 class="welcome-title">MODELO<br>MONDOU</h1>
+      <div class="divider"></div>
+      <p class="welcome-subtitle">
+        Una invitación para formar parte de nuestras<br>
+        sesiones de práctica, creación de contenido<br>
+        y transformación.
+      </p>
+      <p class="welcome-note">
+        Cada solicitud es evaluada individualmente por nuestro equipo.<br>
+        Las participantes seleccionadas podrán ser invitadas a servicios,<br>
+        sesiones fotográficas, lanzamientos y experiencias especiales.
+      </p>
+      <button class="btn-primary" onclick="goToStep(1)">COMENZAR SOLICITUD</button>
+    </div>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<div class="progress-bar" id="progressBar" style="display:none">
+  <div class="progress-fill" id="progressFill"></div>
+</div>
+<div class="progress-dots" id="progressDots" style="display:none">
+  <div class="dot" id="dot1"></div>
+  <div class="dot" id="dot2"></div>
+  <div class="dot" id="dot3"></div>
+  <div class="dot" id="dot4"></div>
+  <div class="dot" id="dot5"></div>
+</div>
+
+<!-- PASO 1 -->
+<div class="screen" id="screen-1">
+  <div class="form-screen">
+    <div class="step-label">Paso 01 — 05</div>
+    <h2 class="step-title">Información<br>Personal</h2>
+    <p class="step-subtitle">Cuéntanos sobre ti.</p>
+
+    <div class="field">
+      <label class="field-label">Nombre completo</label>
+      <input class="field-input" id="nombre" type="text" placeholder="Tu nombre completo" autocomplete="name">
+      <div class="field-error" id="err-nombre">Este campo es requerido</div>
+    </div>
+    <div class="field">
+      <label class="field-label">Fecha de nacimiento</label>
+      <input class="field-input" id="fecha_nacimiento" type="date">
+      <div class="field-error" id="err-fecha">Este campo es requerido</div>
+    </div>
+    <div class="field">
+      <label class="field-label">Ciudad</label>
+      <input class="field-input" id="ciudad" type="text" placeholder="Tu ciudad">
+      <div class="field-error" id="err-ciudad">Este campo es requerido</div>
+    </div>
+    <div class="field">
+      <label class="field-label">Teléfono</label>
+      <input class="field-input" id="telefono" type="tel" placeholder="+52 000 000 0000" autocomplete="tel">
+      <div class="field-error" id="err-telefono">Este campo es requerido</div>
+    </div>
+    <div class="field">
+      <label class="field-label">Correo electrónico</label>
+      <input class="field-input" id="correo" type="email" placeholder="tu@correo.com" autocomplete="email">
+      <div class="field-error" id="err-correo">Ingresa un correo válido</div>
+    </div>
+
+    <div class="form-nav">
+      <button class="btn-primary" onclick="validateStep1()">CONTINUAR</button>
+      <button class="btn-ghost" onclick="goToStep(0)">REGRESAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- PASO 2 -->
+<div class="screen" id="screen-2">
+  <div class="form-screen">
+    <div class="step-label">Paso 02 — 05</div>
+    <h2 class="step-title">Redes<br>Sociales</h2>
+    <p class="step-subtitle">Tu presencia digital.</p>
+
+    <div class="field">
+      <label class="field-label">Instagram</label>
+      <input class="field-input" id="instagram" type="text" placeholder="@tuusuario">
+      <div class="field-error" id="err-instagram">Instagram es requerido</div>
+    </div>
+    <div class="field">
+      <label class="field-label">TikTok <span style="opacity:0.4;font-size:8px">— Opcional</span></label>
+      <input class="field-input" id="tiktok" type="text" placeholder="@tuusuario">
+    </div>
+    <div class="field">
+      <label class="field-label">Facebook <span style="opacity:0.4;font-size:8px">— Opcional</span></label>
+      <input class="field-input" id="facebook" type="text" placeholder="tu perfil">
+    </div>
+
+    <div class="field">
+      <label class="field-label">¿Creas contenido frecuentemente?</label>
+      <div class="radio-group">
+        <div class="radio-option">
+          <input type="radio" name="contenido" id="c-si" value="Sí" onchange="toggleContenido(this.value)">
+          <label for="c-si">Sí</label>
+        </div>
+        <div class="radio-option">
+          <input type="radio" name="contenido" id="c-oca" value="Ocasionalmente" onchange="toggleContenido(this.value)">
+          <label for="c-oca">Ocasionalmente</label>
+        </div>
+        <div class="radio-option">
+          <input type="radio" name="contenido" id="c-no" value="No" onchange="toggleContenido(this.value)">
+          <label for="c-no">No</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="conditional-section" id="section-seguidores">
+      <div class="field">
+        <label class="field-label">Seguidores Instagram</label>
+        <input class="field-input" id="seg_instagram" type="number" placeholder="Número aproximado">
+      </div>
+      <div class="field">
+        <label class="field-label">Seguidores TikTok</label>
+        <input class="field-input" id="seg_tiktok" type="number" placeholder="Número aproximado">
+      </div>
+      <div class="field">
+        <label class="field-label">Captura de estadísticas</label>
+        <div class="upload-area" onclick="document.getElementById('upload-stats').click()">
+          <input type="file" id="upload-stats" accept="image/*" onchange="previewImage(this,'prev-stats')">
+          <div class="upload-icon">+</div>
+          <div class="upload-label">Subir captura</div>
+          <img class="upload-preview" id="prev-stats">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-nav">
+      <button class="btn-primary" onclick="validateStep2()">CONTINUAR</button>
+      <button class="btn-ghost" onclick="goToStep(1)">REGRESAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- PASO 3 -->
+<div class="screen" id="screen-3">
+  <div class="form-screen">
+    <div class="step-label">Paso 03 — 05</div>
+    <h2 class="step-title">Tu<br>Cabello</h2>
+    <p class="step-subtitle">Queremos conocerte mejor.</p>
+
+    <div class="field">
+      <label class="field-label">Fotografía frontal</label>
+      <div class="upload-area" onclick="document.getElementById('upload-frontal').click()">
+        <input type="file" id="upload-frontal" accept="image/*" onchange="previewImage(this,'prev-frontal')">
+        <div class="upload-icon">+</div>
+        <div class="upload-label">Subir foto frontal</div>
+        <img class="upload-preview" id="prev-frontal">
+      </div>
+      <div class="field-error" id="err-frontal">Esta foto es requerida</div>
+    </div>
+    <div class="field">
+      <label class="field-label">Fotografía lateral</label>
+      <div class="upload-area" onclick="document.getElementById('upload-lateral').click()">
+        <input type="file" id="upload-lateral" accept="image/*" onchange="previewImage(this,'prev-lateral')">
+        <div class="upload-icon">+</div>
+        <div class="upload-label">Subir foto lateral</div>
+        <img class="upload-preview" id="prev-lateral">
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">Fotografía de tu cabello actual</label>
+      <div class="upload-area" onclick="document.getElementById('upload-cabello').click()">
+        <input type="file" id="upload-cabello" accept="image/*" onchange="previewImage(this,'prev-cabello')">
+        <div class="upload-icon">+</div>
+        <div class="upload-label">Subir foto de cabello</div>
+        <img class="upload-preview" id="prev-cabello">
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="field-label">Largo actual del cabello</label>
+      <select class="field-input" id="largo_cabello">
+        <option value="" disabled selected style="background:#111">Selecciona</option>
+        <option value="Corto" style="background:#111">Corto</option>
+        <option value="Medio" style="background:#111">Medio</option>
+        <option value="Largo" style="background:#111">Largo</option>
+        <option value="Muy largo" style="background:#111">Muy largo</option>
+      </select>
+    </div>
+    <div class="field">
+      <label class="field-label">Color actual</label>
+      <input class="field-input" id="color_cabello" type="text" placeholder="Ej. Castaño oscuro, rubio, negro...">
+    </div>
+    <div class="field">
+      <label class="field-label">¿Has utilizado extensiones?</label>
+      <div class="radio-group">
+        <div class="radio-option">
+          <input type="radio" name="extensiones" id="ext-si" value="Sí">
+          <label for="ext-si">Sí</label>
+        </div>
+        <div class="radio-option">
+          <input type="radio" name="extensiones" id="ext-no" value="No">
+          <label for="ext-no">No</label>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">¿Estarías abierta a una transformación?</label>
+      <div class="radio-group">
+        <div class="radio-option">
+          <input type="radio" name="transformacion" id="tr-si" value="Sí">
+          <label for="tr-si">Sí</label>
+        </div>
+        <div class="radio-option">
+          <input type="radio" name="transformacion" id="tr-tal" value="Tal vez">
+          <label for="tr-tal">Tal vez</label>
+        </div>
+        <div class="radio-option">
+          <input type="radio" name="transformacion" id="tr-no" value="No">
+          <label for="tr-no">No</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-nav">
+      <button class="btn-primary" onclick="validateStep3()">CONTINUAR</button>
+      <button class="btn-ghost" onclick="goToStep(2)">REGRESAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- PASO 4 -->
+<div class="screen" id="screen-4">
+  <div class="form-screen">
+    <div class="step-label">Paso 04 — 05</div>
+    <h2 class="step-title">Disponibilidad</h2>
+    <p class="step-subtitle">¿Cuándo podemos contar contigo?</p>
+
+    <div class="field">
+      <label class="field-label">¿Puedes asistir entre semana?</label>
+      <div class="radio-group">
+        <div class="radio-option">
+          <input type="radio" name="semana" id="sem-si" value="Sí">
+          <label for="sem-si">Sí</label>
+        </div>
+        <div class="radio-option">
+          <input type="radio" name="semana" id="sem-no" value="No">
+          <label for="sem-no">No</label>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">¿Puedes participar en sesiones de foto y video?</label>
+      <div class="radio-group">
+        <div class="radio-option">
+          <input type="radio" name="fotovideo" id="fv-si" value="Sí">
+          <label for="fv-si">Sí</label>
+        </div>
+        <div class="radio-option">
+          <input type="radio" name="fotovideo" id="fv-no" value="No">
+          <label for="fv-no">No</label>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label class="field-label">¿Puedes acudir a cualquier sucursal?</label>
+      <div class="radio-group">
+        <div class="radio-option">
+          <input type="radio" name="sucursales" id="suc-si" value="Sí">
+          <label for="suc-si">Sí</label>
+        </div>
+        <div class="radio-option">
+          <input type="radio" name="sucursales" id="suc-no" value="No">
+          <label for="suc-no">No</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-nav">
+      <button class="btn-primary" onclick="goToStep(5)">CONTINUAR</button>
+      <button class="btn-ghost" onclick="goToStep(3)">REGRESAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- PASO 5 -->
+<div class="screen" id="screen-5">
+  <div class="form-screen">
+    <div class="step-label">Paso 05 — 05</div>
+    <h2 class="step-title">Autorizaciones</h2>
+    <p class="step-subtitle">Necesitamos tu confirmación para continuar.</p>
+
+    <div id="checkboxes">
+      <div class="checkbox-item" onclick="toggleCheck('chk1')">
+        <div class="checkbox-box" id="chk1"><div class="checkbox-check"></div></div>
+        <div class="checkbox-text">Autorizo a Mondou a capturar fotografías y videos durante mi participación.</div>
+      </div>
+      <div class="checkbox-item" onclick="toggleCheck('chk2')">
+        <div class="checkbox-box" id="chk2"><div class="checkbox-check"></div></div>
+        <div class="checkbox-text">Autorizo a Mondou a utilizar dicho material con fines promocionales, publicitarios y comerciales.</div>
+      </div>
+      <div class="checkbox-item" onclick="toggleCheck('chk3')">
+        <div class="checkbox-box" id="chk3"><div class="checkbox-check"></div></div>
+        <div class="checkbox-text">Entiendo que completar esta solicitud no garantiza mi selección.</div>
+      </div>
+      <div class="checkbox-item" onclick="toggleCheck('chk4')">
+        <div class="checkbox-box" id="chk4"><div class="checkbox-check"></div></div>
+        <div class="checkbox-text">Confirmo que toda la información proporcionada es verdadera.</div>
+      </div>
+    </div>
+
+    <div class="form-nav">
+      <button class="btn-primary" id="btn-submit" onclick="submitForm()">ENVIAR SOLICITUD</button>
+      <button class="btn-ghost" onclick="goToStep(4)">REGRESAR</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUCCESS -->
+<div class="screen" id="screen-success">
+  <div style="max-width:360px;margin:0 auto;text-align:center;padding:60px 40px;">
+    <div class="success-ring">
+      <span class="success-check">✦</span>
+    </div>
+    <div class="brand-name" style="margin-bottom:24px">Mondou</div>
+    <h2 class="success-title">Solicitud<br>recibida.</h2>
+    <div class="divider"></div>
+    <p class="success-text">
+      Gracias por tu interés en formar parte de Modelo Mondou.<br><br>
+      Nuestro equipo revisará tu perfil y, si existe una oportunidad compatible contigo, nos pondremos en contacto personalmente.
+    </p>
+    <button class="btn-primary" onclick="goToStep(0)">FINALIZAR</button>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div class="screen" id="screen-admin">
+  <div class="admin-header">
+    <div>
+      <div class="admin-brand">Mondou</div>
+      <div class="admin-title">Panel de Modelos</div>
+    </div>
+    <button class="btn-ghost" style="padding:0" onclick="showScreen('screen-welcome')">← Salir</button>
+  </div>
+  <div class="admin-body">
+    <input class="filter-input" id="f-buscar" placeholder="Buscar por nombre..." oninput="filterModels()">
+    <div class="filter-row">
+      <select class="filter-select" id="f-ciudad" onchange="filterModels()">
+        <option value="">Todas las ciudades</option>
+      </select>
+      <select class="filter-select" id="f-status" onchange="filterModels()">
+        <option value="">Todos los status</option>
+        <option value="pendiente">Pendiente</option>
+        <option value="seleccionada">Seleccionada</option>
+        <option value="descartada">Descartada</option>
+      </select>
+      <select class="filter-select" id="f-contenido" onchange="filterModels()">
+        <option value="">Todo contenido</option>
+        <option value="Sí">Crea contenido</option>
+        <option value="Ocasionalmente">Ocasionalmente</option>
+        <option value="No">No crea</option>
+      </select>
+    </div>
+    <div class="results-count" id="results-count"></div>
+    <div class="models-grid" id="models-grid">
+      <div class="loading-dots">
+        <div class="loading-dot"></div>
+        <div class="loading-dot"></div>
+        <div class="loading-dot"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODEL DETAIL MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">← Regresar</button>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<!-- ADMIN BUTTON (hidden on admin/success) -->
+<button class="admin-toggle" id="adminBtn" onclick="showPinModal()" title="Panel Admin">⚙</button>
+
+<script>
+const SUPABASE_URL = 'https://igtnywkyqihxsoxmasql.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_DefnRW6VNXo7xm2LK-_ctA_ASNdsS0C';
+
+let currentStep = 0;
+let allModels = [];
+let selectedModelId = null;
+
+// ─── NAVIGATION ───────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+
+  const isForm = id.startsWith('screen-') && !isNaN(id.split('-')[1]);
+  const isAdmin = id === 'screen-admin';
+  const isSuccess = id === 'screen-success';
+
+  document.getElementById('progressBar').style.display = isForm ? 'block' : 'none';
+  document.getElementById('progressDots').style.display = isForm ? 'flex' : 'none';
+  document.getElementById('adminBtn').style.display = (isAdmin || isSuccess) ? 'none' : 'flex';
+}
+
+function goToStep(n) {
+  currentStep = n;
+  if (n === 0) { showScreen('screen-welcome'); return; }
+  showScreen('screen-' + n);
+  updateProgress(n);
+}
+
+function updateProgress(step) {
+  const pct = (step / 5) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  for (let i = 1; i <= 5; i++) {
+    const d = document.getElementById('dot' + i);
+    d.classList.toggle('active', i <= step);
+  }
+}
+
+// ─── VALIDATION ───────────────────────────────────────────────
+function showErr(id, show) {
+  const el = document.getElementById('err-' + id);
+  if (el) el.classList.toggle('show', show);
+  const inp = document.getElementById(id);
+  if (inp) inp.classList.toggle('error', show);
+}
+
+function validateStep1() {
+  const nombre = document.getElementById('nombre').value.trim();
+  const fecha = document.getElementById('fecha_nacimiento').value;
+  const ciudad = document.getElementById('ciudad').value.trim();
+  const tel = document.getElementById('telefono').value.trim();
+  const correo = document.getElementById('correo').value.trim();
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo);
+
+  showErr('nombre', !nombre);
+  showErr('fecha', !fecha);
+  showErr('ciudad', !ciudad);
+  showErr('telefono', !tel);
+  showErr('correo', !emailOk);
+
+  if (nombre && fecha && ciudad && tel && emailOk) goToStep(2);
+}
+
+function validateStep2() {
+  const ig = document.getElementById('instagram').value.trim();
+  showErr('instagram', !ig);
+  if (ig) goToStep(3);
+}
+
+function validateStep3() {
+  const frontal = document.getElementById('upload-frontal').files[0];
+  showErr('frontal', !frontal);
+  if (frontal) goToStep(4);
+}
+
+// ─── UI HELPERS ───────────────────────────────────────────────
+function toggleContenido(val) {
+  document.getElementById('section-seguidores').classList.toggle('show', val === 'Sí');
+}
+
+function previewImage(input, previewId) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const img = document.getElementById(previewId);
+    img.src = e.target.result;
+    img.classList.add('show');
+  };
+  reader.readAsDataURL(file);
+}
+
+function toggleCheck(id) {
+  document.getElementById(id).classList.toggle('checked');
+}
+
+// ─── UPLOAD FILE TO SUPABASE ──────────────────────────────────
+async function uploadFile(file, path) {
+  if (!file) return null;
+  const formData = new FormData();
+  formData.append('', file);
+  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/modelos-fotos/${path}`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${SUPABASE_KEY}` },
+    body: formData
+  });
+  if (!res.ok) return null;
+  return `${SUPABASE_URL}/storage/v1/object/public/modelos-fotos/${path}`;
+}
+
+// ─── SUBMIT ───────────────────────────────────────────────────
+async function submitForm() {
+  const checks = ['chk1','chk2','chk3','chk4'].every(id =>
+    document.getElementById(id).classList.contains('checked')
+  );
+  if (!checks) { showToast('Acepta todos los términos para continuar'); return; }
+
+  const btn = document.getElementById('btn-submit');
+  btn.textContent = 'ENVIANDO...';
+  btn.style.opacity = '0.5';
+  btn.disabled = true;
+
+  try {
+    const uid = Date.now();
+    const nombre = document.getElementById('nombre').value.trim();
+    const slug = nombre.replace(/\s+/g,'-').toLowerCase();
+
+    const [fFrontal, fLateral, fCabello, fStats] = await Promise.all([
+      uploadFile(document.getElementById('upload-frontal').files[0], `${uid}-${slug}-frontal.jpg`),
+      uploadFile(document.getElementById('upload-lateral').files[0], `${uid}-${slug}-lateral.jpg`),
+      uploadFile(document.getElementById('upload-cabello').files[0], `${uid}-${slug}-cabello.jpg`),
+      uploadFile(document.getElementById('upload-stats').files[0], `${uid}-${slug}-stats.jpg`)
+    ]);
+
+    const contenido = document.querySelector('input[name="contenido"]:checked')?.value || '';
+    const extensiones = document.querySelector('input[name="extensiones"]:checked')?.value || '';
+    const transformacion = document.querySelector('input[name="transformacion"]:checked')?.value || '';
+    const semana = document.querySelector('input[name="semana"]:checked')?.value || '';
+    const fotovideo = document.querySelector('input[name="fotovideo"]:checked')?.value || '';
+    const sucursales = document.querySelector('input[name="sucursales"]:checked')?.value || '';
+
+    const payload = {
+      nombre,
+      fecha_nacimiento: document.getElementById('fecha_nacimiento').value || null,
+      ciudad: document.getElementById('ciudad').value.trim(),
+      telefono: document.getElementById('telefono').value.trim(),
+      correo: document.getElementById('correo').value.trim(),
+      instagram: document.getElementById('instagram').value.trim(),
+      tiktok: document.getElementById('tiktok').value.trim(),
+      facebook: document.getElementById('facebook').value.trim(),
+      crea_contenido: contenido,
+      seguidores_instagram: document.getElementById('seg_instagram').value || null,
+      seguidores_tiktok: document.getElementById('seg_tiktok').value || null,
+      largo_cabello: document.getElementById('largo_cabello').value,
+      color_cabello: document.getElementById('color_cabello').value.trim(),
+      uso_extensiones: extensiones,
+      abierta_transformacion: transformacion,
+      disponible_semana: semana,
+      disponible_foto_video: fotovideo,
+      disponible_sucursales: sucursales,
+      foto_frontal_url: fFrontal,
+      foto_lateral_url: fLateral,
+      foto_cabello_url: fCabello,
+      foto_estadisticas_url: fStats,
+      status: 'pendiente'
+    };
+
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/modelos`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) throw new Error('Error al guardar');
+    showScreen('screen-success');
+
+  } catch(e) {
+    showToast('Ocurrió un error. Intenta de nuevo.');
+    btn.textContent = 'ENVIAR SOLICITUD';
+    btn.style.opacity = '1';
+    btn.disabled = false;
+  }
+}
+
+// ─── ADMIN ────────────────────────────────────────────────────
+async function openAdmin() {
+  showScreen('screen-admin');
+  await loadModels();
+}
+
+async function loadModels() {
+  document.getElementById('models-grid').innerHTML = `
+    <div class="loading-dots">
+      <div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div>
+    </div>`;
+
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/modelos?select=*&order=created_at.desc`, {
+    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+  });
+  allModels = await res.json();
+  populateCityFilter();
+  renderModels(allModels);
+}
+
+function populateCityFilter() {
+  const cities = [...new Set(allModels.map(m => m.ciudad).filter(Boolean))].sort();
+  const sel = document.getElementById('f-ciudad');
+  sel.innerHTML = '<option value="">Todas las ciudades</option>';
+  cities.forEach(c => sel.innerHTML += `<option value="${c}">${c}</option>`);
+}
+
+function filterModels() {
+  const buscar = document.getElementById('f-buscar').value.toLowerCase();
+  const ciudad = document.getElementById('f-ciudad').value;
+  const status = document.getElementById('f-status').value;
+  const contenido = document.getElementById('f-contenido').value;
+
+  const filtered = allModels.filter(m => {
+    if (buscar && !m.nombre?.toLowerCase().includes(buscar)) return false;
+    if (ciudad && m.ciudad !== ciudad) return false;
+    if (status && m.status !== status) return false;
+    if (contenido && m.crea_contenido !== contenido) return false;
+    return true;
+  });
+  renderModels(filtered);
+}
+
+function renderModels(models) {
+  const grid = document.getElementById('models-grid');
+  document.getElementById('results-count').textContent = `${models.length} perfil${models.length !== 1 ? 'es' : ''} encontrado${models.length !== 1 ? 's' : ''}`;
+
+  if (!models.length) {
+    grid.innerHTML = '<div class="empty-state">No se encontraron perfiles<br>con los filtros seleccionados.</div>';
+    return;
+  }
+
+  grid.innerHTML = models.map(m => `
+    <div class="model-card" onclick="openModel('${m.id}')">
+      <div class="model-card-header">
+        <div class="model-name">${m.nombre || '—'}</div>
+        <div class="model-status status-${m.status || 'pendiente'}">${m.status || 'pendiente'}</div>
+      </div>
+      <div class="model-meta">
+        <div class="model-tag">Ciudad: <span>${m.ciudad || '—'}</span></div>
+        <div class="model-tag">Cabello: <span>${m.largo_cabello || '—'}</span></div>
+        ${m.crea_contenido === 'Sí' ? `<div class="model-tag">IG: <span>${m.seguidores_instagram || '—'} seg.</span></div>` : ''}
+        <div class="model-tag">Contenido: <span>${m.crea_contenido || '—'}</span></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openModel(id) {
+  selectedModelId = id;
+  const m = allModels.find(x => x.id === id);
+  if (!m) return;
+
+  const photos = [m.foto_frontal_url, m.foto_lateral_url, m.foto_cabello_url].filter(Boolean);
+
+  document.getElementById('modal-content').innerHTML = `
+    <div class="modal-name">${m.nombre || '—'}</div>
+    <div class="modal-city">${m.ciudad || '—'}</div>
+
+    ${photos.length ? `
+    <div class="modal-photos">
+      ${photos.map(p => `<img class="modal-photo" src="${p}" loading="lazy">`).join('')}
+    </div>` : ''}
+
+    <div class="modal-section">
+      <div class="modal-section-title">Información Personal</div>
+      <div class="modal-row"><span class="modal-key">Teléfono</span><span class="modal-val">${m.telefono || '—'}</span></div>
+      <div class="modal-row"><span class="modal-key">Correo</span><span class="modal-val" style="font-size:10px">${m.correo || '—'}</span></div>
+      <div class="modal-row"><span class="modal-key">Nacimiento</span><span class="modal-val">${m.fecha_nacimiento || '—'}</span></div>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">Redes Sociales</div>
+      <div class="modal-row"><span class="modal-key">Instagram</span><span class="modal-val">${m.instagram || '—'}</span></div>
+      <div class="modal-row"><span class="modal-key">TikTok</span><span class="modal-val">${m.tiktok || '—'}</span></div>
+      <div class="modal-row"><span class="modal-key">Crea contenido</span><span class="modal-val">${m.crea_contenido || '—'}</span></div>
+      ${m.crea_contenido === 'Sí' ? `
+      <div class="modal-row"><span class="modal-key">Seg. Instagram</span><span class="modal-val">${m.seguidores_instagram || '—'}</span></div>
+      <div class="modal-row"><span class="modal-key">Seg. TikTok</span><span class="modal-val">${m.seguidores_tiktok || '—'}</span></div>` : ''}
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">Cabello</div>
+      <div class="modal-row"><span class="modal-key">Largo</span><span class="modal-val">${m.largo_cabello || '—'}</span></div>
+      <div class="modal-row"><span class="modal-key">Color</span><span class="modal-val">${m.color_cabello || '—'}</span></div>
+      <div class="modal-row"><span class="modal-key">Extensiones</span><span class="modal-val">${m.uso_extensiones || '—'}</span></div>
+      <div class="modal-row"><span class="modal-key">Transformación</span><span class="modal-val">${m.abierta_transformacion || '—'}</span></div>
+    </div>
+
+    <div class="modal-section">
+      <div class="modal-section-title">Disponibilidad</div>
+      <div class="modal-row"><span class="modal-key">Entre semana</span><span class="modal-val">${m.disponible_semana || '—'}</span></div>
+      <div class="modal-row"><span class="modal-key">Foto / Video</span><span class="modal-val">${m.disponible_foto_video || '—'}</span></div>
+      <div class="modal-row"><span class="modal-key">Sucursales</span><span class="modal-val">${m.disponible_sucursales || '—'}</span></div>
+    </div>
+
+    <div class="status-buttons">
+      <button class="btn-status btn-seleccionar" onclick="updateStatus('seleccionada')">SELECCIONAR</button>
+      <button class="btn-status btn-descartar" onclick="updateStatus('descartada')">DESCARTAR</button>
+    </div>
+  `;
+
+  document.getElementById('modal-overlay').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('show');
+}
+
+async function updateStatus(status) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/modelos?id=eq.${selectedModelId}`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify({ status })
+  });
+  if (res.ok) {
+    const m = allModels.find(x => x.id === selectedModelId);
+    if (m) m.status = status;
+    showToast(status === 'seleccionada' ? 'Modelo seleccionada ✓' : 'Modelo descartada');
+    closeModal();
+    filterModels();
+  }
+}
+
+// ─── PIN ────────────────────────────────────────────────────
+const ADMIN_PIN = "210281";
+let pinEntry = "";
+
+function showPinModal() {
+  pinEntry = "";
+  updatePinDots();
+  document.getElementById("pin-overlay").classList.add("show");
+}
+
+function closePinModal() {
+  document.getElementById("pin-overlay").classList.remove("show");
+  pinEntry = "";
+  updatePinDots();
+}
+
+function pinPress(digit) {
+  if (pinEntry.length >= 6) return;
+  pinEntry += digit;
+  updatePinDots();
+  if (pinEntry.length === 6) {
+    setTimeout(() => {
+      if (pinEntry === ADMIN_PIN) {
+        closePinModal();
+        openAdmin();
+      } else {
+        // shake error
+        for (let i = 1; i <= 6; i++) {
+          document.getElementById("pd" + i).classList.add("error");
+        }
+        setTimeout(() => {
+          pinEntry = "";
+          updatePinDots();
+          for (let i = 1; i <= 6; i++) {
+            document.getElementById("pd" + i).classList.remove("error");
+          }
+        }, 700);
+      }
+    }, 150);
+  }
+}
+
+function pinDelete() {
+  pinEntry = pinEntry.slice(0, -1);
+  updatePinDots();
+}
+
+function updatePinDots() {
+  for (let i = 1; i <= 6; i++) {
+    const dot = document.getElementById("pd" + i);
+    dot.classList.toggle("filled", i <= pinEntry.length);
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+</script>
+<!-- PIN MODAL -->
+<div class="pin-overlay" id="pin-overlay">
+  <div class="pin-box">
+    <div class="pin-title">Acceso</div>
+    <div class="pin-subtitle">Panel Mondou</div>
+    <div class="pin-dots">
+      <div class="pin-dot" id="pd1"></div>
+      <div class="pin-dot" id="pd2"></div>
+      <div class="pin-dot" id="pd3"></div>
+      <div class="pin-dot" id="pd4"></div>
+      <div class="pin-dot" id="pd5"></div>
+      <div class="pin-dot" id="pd6"></div>
+    </div>
+    <div class="pin-keypad">
+      <button class="pin-key" onclick="pinPress('1')">1</button>
+      <button class="pin-key" onclick="pinPress('2')">2</button>
+      <button class="pin-key" onclick="pinPress('3')">3</button>
+      <button class="pin-key" onclick="pinPress('4')">4</button>
+      <button class="pin-key" onclick="pinPress('5')">5</button>
+      <button class="pin-key" onclick="pinPress('6')">6</button>
+      <button class="pin-key" onclick="pinPress('7')">7</button>
+      <button class="pin-key" onclick="pinPress('8')">8</button>
+      <button class="pin-key" onclick="pinPress('9')">9</button>
+      <button class="pin-key empty"></button>
+      <button class="pin-key" onclick="pinPress('0')">0</button>
+      <button class="pin-key del" onclick="pinDelete()">⌫</button>
+    </div>
+    <button class="pin-cancel" onclick="closePinModal()">CANCELAR</button>
+  </div>
+</div>
+</body>
+</html>
