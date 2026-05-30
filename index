@@ -1570,8 +1570,8 @@ function openModel(id) {
       <button class="btn-status btn-seleccionar" onclick="updateStatus('seleccionada')">SELECCIONAR</button>
       <button class="btn-status btn-descartar" onclick="updateStatus('descartada')">DESCARTAR</button>
     </div>
-    <div style="margin-top:12px;text-align:center">
-      <button onclick="deleteModel()" style="background:transparent;border:none;color:rgba(255,255,255,0.2);font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;padding:8px 16px;transition:color 0.3s" onmouseover="this.style.color='#c0392b'" onmouseout="this.style.color='rgba(255,255,255,0.2)'">ELIMINAR PERFIL</button>
+    <div style="margin-top:16px;text-align:center;padding-top:16px;border-top:1px solid rgba(255,255,255,0.08)">
+      <button onclick="deleteModel()" style="background:transparent;border:1px solid #c0392b;color:#c0392b;font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;padding:10px 24px;width:100%;transition:all 0.3s">🗑 ELIMINAR PERFIL</button>
     </div>
   `;
 
