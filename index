@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -332,11 +331,9 @@
     transition: all 0.3s;
     position: relative;
     margin-top: 4px;
+    display: block;
   }
   .upload-area:hover { border-color: var(--gold); background: var(--gold-dim); }
-  .upload-area input[type="file"] {
-    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
-  }
   .upload-icon {
     width: 24px; height: 24px;
     border: 1px solid var(--gold-border);
@@ -1005,12 +1002,12 @@
       </div>
       <div class="field">
         <label class="field-label">Captura de estadísticas</label>
-        <label class="upload-area" for="upload-stats">
-          <input type="file" id="upload-stats" accept="image/*" onchange="previewImage(this,'prev-stats')" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">
+        <div class="upload-area" onclick="document.getElementById('upload-stats').click()">
+          <input type="file" id="upload-stats" accept="image/*" style="display:none" onchange="previewImage(this,'prev-stats')">
           <div class="upload-icon">+</div>
           <div class="upload-label">Subir captura</div>
           <img class="upload-preview" id="prev-stats">
-        </label>
+        </div>
       </div>
     </div>
 
@@ -1030,8 +1027,8 @@
 
     <div class="field">
       <label class="field-label">Fotografía frontal</label>
-      <label class="upload-area" for="upload-frontal">
-        <input type="file" id="upload-frontal" accept="image/*" onchange="previewImage(this,'prev-frontal')" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">
+      <div class="upload-area" onclick="document.getElementById('upload-frontal').click()">
+        <input type="file" id="upload-frontal" accept="image/*" style="display:none" onchange="previewImage(this,'prev-frontal')">
         <div class="upload-icon">+</div>
         <div class="upload-label">Subir foto frontal</div>
         <img class="upload-preview" id="prev-frontal">
@@ -1040,8 +1037,8 @@
     </div>
     <div class="field">
       <label class="field-label">Fotografía lateral</label>
-      <label class="upload-area" for="upload-lateral">
-        <input type="file" id="upload-lateral" accept="image/*" onchange="previewImage(this,'prev-lateral')" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">
+      <div class="upload-area" onclick="document.getElementById('upload-lateral').click()">
+        <input type="file" id="upload-lateral" accept="image/*" style="display:none" onchange="previewImage(this,'prev-lateral')">
         <div class="upload-icon">+</div>
         <div class="upload-label">Subir foto lateral</div>
         <img class="upload-preview" id="prev-lateral">
@@ -1049,8 +1046,8 @@
     </div>
     <div class="field">
       <label class="field-label">Fotografía de tu cabello actual</label>
-      <label class="upload-area" for="upload-cabello">
-        <input type="file" id="upload-cabello" accept="image/*" onchange="previewImage(this,'prev-cabello')" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">
+      <div class="upload-area" onclick="document.getElementById('upload-cabello').click()">
+        <input type="file" id="upload-cabello" accept="image/*" style="display:none" onchange="previewImage(this,'prev-cabello')">
         <div class="upload-icon">+</div>
         <div class="upload-label">Subir foto de cabello</div>
         <img class="upload-preview" id="prev-cabello">
