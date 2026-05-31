@@ -864,6 +864,63 @@
   }
   .pin-cancel:hover { color: var(--white); }
 
+  /* CONFIRMACIÓN CUSTOM */
+  .confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.95);
+    z-index: 500;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    animation: fadeIn 0.25s ease;
+  }
+  .confirm-overlay.show { display: flex; }
+  .confirm-box {
+    max-width: 320px;
+    width: 100%;
+    border: 1px solid var(--gold-border);
+    padding: 40px 32px 32px;
+    text-align: center;
+  }
+  .confirm-msg {
+    font-size: 12px;
+    line-height: 1.8;
+    color: rgba(255,255,255,0.75);
+    letter-spacing: 0.3px;
+    margin-bottom: 32px;
+  }
+  .confirm-actions { display: flex; gap: 10px; }
+  .confirm-btn-ok {
+    flex: 1;
+    padding: 14px 8px;
+    border: 1px solid #c0392b;
+    background: transparent;
+    color: #c0392b;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 8px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .confirm-btn-ok:hover { background: rgba(192,57,43,0.1); }
+  .confirm-btn-cancel {
+    flex: 1;
+    padding: 14px 8px;
+    border: 1px solid var(--gold-border);
+    background: transparent;
+    color: var(--gray);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 8px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  .confirm-btn-cancel:hover { border-color: var(--gold); color: var(--white); }
+
   @media (min-width: 480px) {
     .filter-row { grid-template-columns: 1fr 1fr 1fr; }
   }
@@ -883,7 +940,7 @@
           <span class="logo-mark-letter">M</span>
         </div>
       </div>
-      <div class="brand-name">Mondou</div>
+      <div class="brand-name">MONDOU</div>
       <h1 class="welcome-title">MODELO<br>MONDOU</h1>
       <div class="divider"></div>
       <p class="welcome-subtitle">
@@ -1171,11 +1228,11 @@
     <div id="checkboxes">
       <div class="checkbox-item" onclick="toggleCheck('chk1')">
         <div class="checkbox-box" id="chk1"><div class="checkbox-check"></div></div>
-        <div class="checkbox-text">Autorizo a Mondou a capturar fotografías y videos durante mi participación.</div>
+        <div class="checkbox-text">Autorizo a MONDOU a capturar fotografías y videos durante mi participación.</div>
       </div>
       <div class="checkbox-item" onclick="toggleCheck('chk2')">
         <div class="checkbox-box" id="chk2"><div class="checkbox-check"></div></div>
-        <div class="checkbox-text">Autorizo a Mondou a utilizar dicho material con fines promocionales, publicitarios y comerciales.</div>
+        <div class="checkbox-text">Autorizo a MONDOU a utilizar dicho material con fines promocionales, publicitarios y comerciales.</div>
       </div>
       <div class="checkbox-item" onclick="toggleCheck('chk3')">
         <div class="checkbox-box" id="chk3"><div class="checkbox-check"></div></div>
@@ -1200,11 +1257,11 @@
     <div class="success-ring">
       <span class="success-check">✦</span>
     </div>
-    <div class="brand-name" style="margin-bottom:24px">Mondou</div>
+    <div class="brand-name" style="margin-bottom:24px">MONDOU</div>
     <h2 class="success-title">Solicitud<br>recibida.</h2>
     <div class="divider"></div>
     <p class="success-text">
-      Gracias por tu interés en formar parte de Modelo Mondou.<br><br>
+      Gracias por tu interés en formar parte de MODELO MONDOU.<br><br>
       Nuestro equipo revisará tu perfil y, si existe una oportunidad compatible contigo, nos pondremos en contacto personalmente.
     </p>
     <button class="btn-primary" onclick="goToStep(0)">FINALIZAR</button>
@@ -1215,7 +1272,7 @@
 <div class="screen" id="screen-admin">
   <div class="admin-header">
     <div>
-      <div class="admin-brand">Mondou</div>
+      <div class="admin-brand">MONDOU</div>
       <div class="admin-title">Panel de Modelos</div>
     </div>
     <button class="btn-ghost" style="padding:0" onclick="showScreen('screen-welcome')">← Salir</button>
@@ -1261,15 +1318,47 @@
 <!-- ADMIN BUTTON (hidden on admin/success) -->
 <button class="admin-toggle" id="adminBtn" onclick="showPinModal()" title="Panel Admin">⚙</button>
 
+<!-- CONFIRMACIÓN CUSTOM -->
+<div class="confirm-overlay" id="custom-confirm">
+  <div class="confirm-box">
+    <p class="confirm-msg" id="custom-confirm-msg"></p>
+    <div class="confirm-actions">
+      <button class="confirm-btn-ok"     onclick="confirmOk()">ELIMINAR</button>
+      <button class="confirm-btn-cancel" onclick="confirmCancel()">CANCELAR</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const SUPABASE_URL = 'https://nfooncnnmgehpooraogv.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_2YGGUcpFY0EDoprTS04uYQ_DHwEQKCz';
+// PIN almacenado como SHA-256 (no en texto plano)
+const ADMIN_PIN_HASH = '0eb404390e1cb00d093df364599afe7ae9ed5ab2c1e92f15b239d352565cb75a';
 
 let currentStep = 0;
 let allModels = [];
 let selectedModelId = null;
+// Control de confirmación custom (reemplaza confirm())
+let _confirmCallback = null;
 
-// ─── NAVIGATION ───────────────────────────────────────────────
+// ─── SEGURIDAD: escape HTML para evitar XSS ───────────────────
+function esc(str) {
+  if (str == null) return '—';
+  return String(str)
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;')
+    .replace(/'/g,'&#39;');
+}
+
+// ─── HASH SHA-256 vía Web Crypto API ─────────────────────────
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+// ─── NAVEGACIÓN ───────────────────────────────────────────────
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
@@ -1295,12 +1384,11 @@ function updateProgress(step) {
   const pct = (step / 5) * 100;
   document.getElementById('progressFill').style.width = pct + '%';
   for (let i = 1; i <= 5; i++) {
-    const d = document.getElementById('dot' + i);
-    d.classList.toggle('active', i <= step);
+    document.getElementById('dot' + i).classList.toggle('active', i <= step);
   }
 }
 
-// ─── VALIDATION ───────────────────────────────────────────────
+// ─── VALIDACIÓN ───────────────────────────────────────────────
 function showErr(id, show) {
   const el = document.getElementById('err-' + id);
   if (el) el.classList.toggle('show', show);
@@ -1308,21 +1396,36 @@ function showErr(id, show) {
   if (inp) inp.classList.toggle('error', show);
 }
 
+function isAtLeast18(dateStr) {
+  if (!dateStr) return false;
+  const dob = new Date(dateStr);
+  const today = new Date();
+  const age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  return age > 18 || (age === 18 && (m > 0 || (m === 0 && today.getDate() >= dob.getDate())));
+}
+
 function validateStep1() {
   const nombre = document.getElementById('nombre').value.trim();
-  const fecha = document.getElementById('fecha_nacimiento').value;
+  const fecha  = document.getElementById('fecha_nacimiento').value;
   const ciudad = document.getElementById('ciudad').value.trim();
-  const tel = document.getElementById('telefono').value.trim();
+  const tel    = document.getElementById('telefono').value.trim();
   const correo = document.getElementById('correo').value.trim();
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo);
+  const edadOk  = isAtLeast18(fecha);
 
-  showErr('nombre', !nombre);
-  showErr('fecha', !fecha);
-  showErr('ciudad', !ciudad);
-  showErr('telefono', !tel);
-  showErr('correo', !emailOk);
+  showErr('nombre',  !nombre);
+  showErr('fecha',   !fecha || !edadOk);
+  showErr('ciudad',  !ciudad);
+  showErr('telefono',!tel);
+  showErr('correo',  !emailOk);
 
-  if (nombre && fecha && ciudad && tel && emailOk) goToStep(2);
+  // Mensaje de edad
+  const errFecha = document.getElementById('err-fecha');
+  if (errFecha && fecha && !edadOk) errFecha.textContent = 'Debes ser mayor de 18 años';
+  else if (errFecha) errFecha.textContent = 'Este campo es requerido';
+
+  if (nombre && fecha && edadOk && ciudad && tel && emailOk) goToStep(2);
 }
 
 function validateStep2() {
@@ -1358,21 +1461,31 @@ function toggleCheck(id) {
   document.getElementById(id).classList.toggle('checked');
 }
 
-// ─── UPLOAD FILE TO SUPABASE ──────────────────────────────────
-async function uploadFile(file, path) {
+// ─── SUBIDA DE ARCHIVOS A SUPABASE ───────────────────────────
+function fileExt(file) {
+  const map = { 'image/png':'png','image/webp':'webp','image/gif':'gif',
+                'image/heic':'heic','image/heif':'heif' };
+  return map[file.type] || 'jpg';
+}
+
+async function uploadFile(file, basePath) {
   if (!file) return null;
-  const formData = new FormData();
-  formData.append('', file);
-  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/modelos-fotos/${path}`, {
+  const ext  = fileExt(file);
+  const path = `${basePath}.${ext}`;
+  const res  = await fetch(`${SUPABASE_URL}/storage/v1/object/modelos-fotos/${path}`, {
     method: 'POST',
-    headers: { 'Authorization': `Bearer ${SUPABASE_KEY}` },
-    body: formData
+    headers: {
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': file.type || 'image/jpeg',
+      'x-upsert': 'true'
+    },
+    body: file   // archivo directo como body, no FormData
   });
   if (!res.ok) return null;
   return `${SUPABASE_URL}/storage/v1/object/public/modelos-fotos/${path}`;
 }
 
-// ─── SUBMIT ───────────────────────────────────────────────────
+// ─── ENVÍO DEL FORMULARIO ─────────────────────────────────────
 async function submitForm() {
   const checks = ['chk1','chk2','chk3','chk4'].every(id =>
     document.getElementById(id).classList.contains('checked')
@@ -1380,52 +1493,55 @@ async function submitForm() {
   if (!checks) { showToast('Acepta todos los términos para continuar'); return; }
 
   const btn = document.getElementById('btn-submit');
-  btn.textContent = 'ENVIANDO...';
-  btn.style.opacity = '0.5';
   btn.disabled = true;
 
   try {
-    const uid = Date.now();
+    const uid   = Date.now();
     const nombre = document.getElementById('nombre').value.trim();
-    const slug = nombre.replace(/\s+/g,'-').toLowerCase();
+    const slug   = nombre.replace(/\s+/g,'-').toLowerCase().replace(/[^a-z0-9-]/g,'');
 
+    // Subir fotos con indicador de progreso
+    btn.textContent = 'SUBIENDO FOTOS...';
+    btn.style.opacity = '0.5';
     const [fFrontal, fLateral, fCabello, fStats] = await Promise.all([
-      uploadFile(document.getElementById('upload-frontal').files[0], `${uid}-${slug}-frontal.jpg`),
-      uploadFile(document.getElementById('upload-lateral').files[0], `${uid}-${slug}-lateral.jpg`),
-      uploadFile(document.getElementById('upload-cabello').files[0], `${uid}-${slug}-cabello.jpg`),
-      uploadFile(document.getElementById('upload-stats').files[0], `${uid}-${slug}-stats.jpg`)
+      uploadFile(document.getElementById('upload-frontal').files[0],  `${uid}-${slug}-frontal`),
+      uploadFile(document.getElementById('upload-lateral').files[0],  `${uid}-${slug}-lateral`),
+      uploadFile(document.getElementById('upload-cabello').files[0],  `${uid}-${slug}-cabello`),
+      uploadFile(document.getElementById('upload-stats').files[0],    `${uid}-${slug}-stats`)
     ]);
 
-    const contenido = document.querySelector('input[name="contenido"]:checked')?.value || '';
-    const extensiones = document.querySelector('input[name="extensiones"]:checked')?.value || '';
-    const transformacion = document.querySelector('input[name="transformacion"]:checked')?.value || '';
-    const semana = document.querySelector('input[name="semana"]:checked')?.value || '';
-    const fotovideo = document.querySelector('input[name="fotovideo"]:checked')?.value || '';
-    const sucursales = document.querySelector('input[name="sucursales"]:checked')?.value || '';
+    btn.textContent = 'GUARDANDO...';
+
+    const contenido     = document.querySelector('input[name="contenido"]:checked')?.value    || '';
+    const extensiones   = document.querySelector('input[name="extensiones"]:checked')?.value  || '';
+    const transformacion= document.querySelector('input[name="transformacion"]:checked')?.value|| '';
+    const semana        = document.querySelector('input[name="semana"]:checked')?.value        || '';
+    const fotovideo     = document.querySelector('input[name="fotovideo"]:checked')?.value     || '';
+    const sucursales    = document.querySelector('input[name="sucursales"]:checked')?.value    || '';
 
     const payload = {
       nombre,
-      fecha_nacimiento: document.getElementById('fecha_nacimiento').value || null,
-      ciudad: document.getElementById('ciudad').value.trim(),
-      telefono: document.getElementById('telefono').value.trim(),
-      correo: document.getElementById('correo').value.trim(),
-      instagram: document.getElementById('instagram').value.trim(),
-      tiktok: document.getElementById('tiktok').value.trim(),
-      facebook: document.getElementById('facebook').value.trim(),
-      crea_contenido: contenido,
-      seguidores_instagram: document.getElementById('seg_instagram').value || null,
-      seguidores_tiktok: document.getElementById('seg_tiktok').value || null,
-      largo_cabello: document.getElementById('largo_cabello').value,
-      color_cabello: document.getElementById('color_cabello').value.trim(),
-      uso_extensiones: extensiones,
+      fecha_nacimiento:       document.getElementById('fecha_nacimiento').value || null,
+      ciudad:                 document.getElementById('ciudad').value.trim(),
+      telefono:               document.getElementById('telefono').value.trim(),
+      correo:                 document.getElementById('correo').value.trim(),
+      instagram:              document.getElementById('instagram').value.trim(),
+      tiktok:                 document.getElementById('tiktok').value.trim(),
+      facebook:               document.getElementById('facebook').value.trim(),
+      crea_contenido:         contenido,
+      seguidores_instagram:   document.getElementById('seg_instagram').value || null,
+      seguidores_tiktok:      document.getElementById('seg_tiktok').value    || null,
+      largo_cabello:          document.getElementById('largo_cabello').value,
+      color_cabello:          document.getElementById('color_cabello').value.trim(),
+      uso_extensiones:        extensiones,
       abierta_transformacion: transformacion,
-      disponible_semana: semana,
-      disponible_foto_video: fotovideo,
-      disponible_sucursales: sucursales,
-      foto_frontal_url: fFrontal,
-      foto_lateral_url: fLateral,
-      foto_cabello_url: fCabello,
-      foto_estadisticas_url: fStats,
+      disponible_semana:      semana,
+      disponible_foto_video:  fotovideo,
+      disponible_sucursales:  sucursales,
+      foto_frontal_url:       fFrontal,
+      foto_lateral_url:       fLateral,
+      foto_cabello_url:       fCabello,
+      foto_estadisticas_url:  fStats,
       status: 'pendiente'
     };
 
@@ -1441,6 +1557,20 @@ async function submitForm() {
     });
 
     if (!res.ok) throw new Error('Error al guardar');
+
+    // Reset completo del formulario (incluyendo SELECTs)
+    document.querySelectorAll('.field-input').forEach(i => {
+      if (i.tagName === 'SELECT') i.selectedIndex = 0;
+      else i.value = '';
+    });
+    document.querySelectorAll('input[type="radio"]').forEach(i => i.checked = false);
+    document.querySelectorAll('.checkbox-box').forEach(b => b.classList.remove('checked'));
+    document.querySelectorAll('.upload-preview').forEach(p => { p.src=''; p.classList.remove('show'); });
+    document.getElementById('section-seguidores').classList.remove('show');
+
+    btn.textContent = 'ENVIAR SOLICITUD';
+    btn.style.opacity = '1';
+    btn.disabled = false;
     showScreen('screen-success');
 
   } catch(e) {
@@ -1462,33 +1592,40 @@ async function loadModels() {
     <div class="loading-dots">
       <div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div>
     </div>`;
-
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/modelos?select=*&order=created_at.desc`, {
-    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-  });
-  allModels = await res.json();
-  populateCityFilter();
-  renderModels(allModels);
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/modelos?select=*&order=created_at.desc`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (!Array.isArray(data)) throw new Error('Respuesta inesperada');
+    allModels = data;
+    populateCityFilter();
+    renderModels(allModels);
+  } catch(e) {
+    document.getElementById('models-grid').innerHTML =
+      `<div class="empty-state">No se pudo cargar la lista.<br>Verifica tu conexión e intenta de nuevo.</div>`;
+  }
 }
 
 function populateCityFilter() {
   const cities = [...new Set(allModels.map(m => m.ciudad).filter(Boolean))].sort();
   const sel = document.getElementById('f-ciudad');
   sel.innerHTML = '<option value="">Todas las ciudades</option>';
-  cities.forEach(c => sel.innerHTML += `<option value="${c}">${c}</option>`);
+  cities.forEach(c => sel.innerHTML += `<option value="${esc(c)}">${esc(c)}</option>`);
 }
 
 function filterModels() {
-  const buscar = document.getElementById('f-buscar').value.toLowerCase();
-  const ciudad = document.getElementById('f-ciudad').value;
-  const status = document.getElementById('f-status').value;
-  const contenido = document.getElementById('f-contenido').value;
+  const buscar   = document.getElementById('f-buscar').value.toLowerCase();
+  const ciudad   = document.getElementById('f-ciudad').value;
+  const status   = document.getElementById('f-status').value;
+  const contenido= document.getElementById('f-contenido').value;
 
   const filtered = allModels.filter(m => {
-    if (buscar && !m.nombre?.toLowerCase().includes(buscar)) return false;
-    if (ciudad && m.ciudad !== ciudad) return false;
-    if (status && m.status !== status) return false;
-    if (contenido && m.crea_contenido !== contenido) return false;
+    if (buscar    && !m.nombre?.toLowerCase().includes(buscar)) return false;
+    if (ciudad    && m.ciudad        !== ciudad)    return false;
+    if (status    && m.status        !== status)    return false;
+    if (contenido && m.crea_contenido!== contenido) return false;
     return true;
   });
   renderModels(filtered);
@@ -1496,7 +1633,8 @@ function filterModels() {
 
 function renderModels(models) {
   const grid = document.getElementById('models-grid');
-  document.getElementById('results-count').textContent = `${models.length} perfil${models.length !== 1 ? 'es' : ''} encontrado${models.length !== 1 ? 's' : ''}`;
+  document.getElementById('results-count').textContent =
+    `${models.length} perfil${models.length !== 1?'es':''} encontrado${models.length !== 1?'s':''}`;
 
   if (!models.length) {
     grid.innerHTML = '<div class="empty-state">No se encontraron perfiles<br>con los filtros seleccionados.</div>';
@@ -1504,16 +1642,16 @@ function renderModels(models) {
   }
 
   grid.innerHTML = models.map(m => `
-    <div class="model-card" onclick="openModel('${m.id}')">
+    <div class="model-card" onclick="openModel('${esc(m.id)}')">
       <div class="model-card-header">
-        <div class="model-name">${m.nombre || '—'}</div>
-        <div class="model-status status-${m.status || 'pendiente'}">${m.status || 'pendiente'}</div>
+        <div class="model-name">${esc(m.nombre)}</div>
+        <div class="model-status status-${esc(m.status||'pendiente')}">${esc(m.status||'pendiente')}</div>
       </div>
       <div class="model-meta">
-        <div class="model-tag">Ciudad: <span>${m.ciudad || '—'}</span></div>
-        <div class="model-tag">Cabello: <span>${m.largo_cabello || '—'}</span></div>
-        ${m.crea_contenido === 'Sí' ? `<div class="model-tag">IG: <span>${m.seguidores_instagram || '—'} seg.</span></div>` : ''}
-        <div class="model-tag">Contenido: <span>${m.crea_contenido || '—'}</span></div>
+        <div class="model-tag">Ciudad: <span>${esc(m.ciudad)}</span></div>
+        <div class="model-tag">Cabello: <span>${esc(m.largo_cabello)}</span></div>
+        ${m.crea_contenido === 'Sí' ? `<div class="model-tag">IG: <span>${esc(m.seguidores_instagram)} seg.</span></div>` : ''}
+        <div class="model-tag">Contenido: <span>${esc(m.crea_contenido)}</span></div>
       </div>
     </div>
   `).join('');
@@ -1527,52 +1665,52 @@ function openModel(id) {
   const photos = [m.foto_frontal_url, m.foto_lateral_url, m.foto_cabello_url].filter(Boolean);
 
   document.getElementById('modal-content').innerHTML = `
-    <div class="modal-name">${m.nombre || '—'}</div>
-    <div class="modal-city">${m.ciudad || '—'}</div>
+    <div class="modal-name">${esc(m.nombre)}</div>
+    <div class="modal-city">${esc(m.ciudad)}</div>
 
     ${photos.length ? `
     <div class="modal-photos">
-      ${photos.map(p => `<img class="modal-photo" src="${p}" loading="lazy">`).join('')}
+      ${photos.map(p => `<img class="modal-photo" src="${esc(p)}" loading="lazy">`).join('')}
     </div>` : ''}
 
     <div class="modal-section">
       <div class="modal-section-title">Información Personal</div>
-      <div class="modal-row"><span class="modal-key">Teléfono</span><span class="modal-val">${m.telefono || '—'}</span></div>
-      <div class="modal-row"><span class="modal-key">Correo</span><span class="modal-val" style="font-size:10px">${m.correo || '—'}</span></div>
-      <div class="modal-row"><span class="modal-key">Nacimiento</span><span class="modal-val">${m.fecha_nacimiento || '—'}</span></div>
+      <div class="modal-row"><span class="modal-key">Teléfono</span><span class="modal-val">${esc(m.telefono)}</span></div>
+      <div class="modal-row"><span class="modal-key">Correo</span><span class="modal-val" style="font-size:10px">${esc(m.correo)}</span></div>
+      <div class="modal-row"><span class="modal-key">Nacimiento</span><span class="modal-val">${esc(m.fecha_nacimiento)}</span></div>
     </div>
 
     <div class="modal-section">
       <div class="modal-section-title">Redes Sociales</div>
-      <div class="modal-row"><span class="modal-key">Instagram</span><span class="modal-val">${m.instagram || '—'}</span></div>
-      <div class="modal-row"><span class="modal-key">TikTok</span><span class="modal-val">${m.tiktok || '—'}</span></div>
-      <div class="modal-row"><span class="modal-key">Crea contenido</span><span class="modal-val">${m.crea_contenido || '—'}</span></div>
+      <div class="modal-row"><span class="modal-key">Instagram</span><span class="modal-val">${esc(m.instagram)}</span></div>
+      <div class="modal-row"><span class="modal-key">TikTok</span><span class="modal-val">${esc(m.tiktok)}</span></div>
+      <div class="modal-row"><span class="modal-key">Crea contenido</span><span class="modal-val">${esc(m.crea_contenido)}</span></div>
       ${m.crea_contenido === 'Sí' ? `
-      <div class="modal-row"><span class="modal-key">Seg. Instagram</span><span class="modal-val">${m.seguidores_instagram || '—'}</span></div>
-      <div class="modal-row"><span class="modal-key">Seg. TikTok</span><span class="modal-val">${m.seguidores_tiktok || '—'}</span></div>` : ''}
+      <div class="modal-row"><span class="modal-key">Seg. Instagram</span><span class="modal-val">${esc(m.seguidores_instagram)}</span></div>
+      <div class="modal-row"><span class="modal-key">Seg. TikTok</span><span class="modal-val">${esc(m.seguidores_tiktok)}</span></div>` : ''}
     </div>
 
     <div class="modal-section">
       <div class="modal-section-title">Cabello</div>
-      <div class="modal-row"><span class="modal-key">Largo</span><span class="modal-val">${m.largo_cabello || '—'}</span></div>
-      <div class="modal-row"><span class="modal-key">Color</span><span class="modal-val">${m.color_cabello || '—'}</span></div>
-      <div class="modal-row"><span class="modal-key">Extensiones</span><span class="modal-val">${m.uso_extensiones || '—'}</span></div>
-      <div class="modal-row"><span class="modal-key">Transformación</span><span class="modal-val">${m.abierta_transformacion || '—'}</span></div>
+      <div class="modal-row"><span class="modal-key">Largo</span><span class="modal-val">${esc(m.largo_cabello)}</span></div>
+      <div class="modal-row"><span class="modal-key">Color</span><span class="modal-val">${esc(m.color_cabello)}</span></div>
+      <div class="modal-row"><span class="modal-key">Extensiones</span><span class="modal-val">${esc(m.uso_extensiones)}</span></div>
+      <div class="modal-row"><span class="modal-key">Transformación</span><span class="modal-val">${esc(m.abierta_transformacion)}</span></div>
     </div>
 
     <div class="modal-section">
       <div class="modal-section-title">Disponibilidad</div>
-      <div class="modal-row"><span class="modal-key">Entre semana</span><span class="modal-val">${m.disponible_semana || '—'}</span></div>
-      <div class="modal-row"><span class="modal-key">Foto / Video</span><span class="modal-val">${m.disponible_foto_video || '—'}</span></div>
-      <div class="modal-row"><span class="modal-key">Sucursales</span><span class="modal-val">${m.disponible_sucursales || '—'}</span></div>
+      <div class="modal-row"><span class="modal-key">Entre semana</span><span class="modal-val">${esc(m.disponible_semana)}</span></div>
+      <div class="modal-row"><span class="modal-key">Foto / Video</span><span class="modal-val">${esc(m.disponible_foto_video)}</span></div>
+      <div class="modal-row"><span class="modal-key">Sucursales</span><span class="modal-val">${esc(m.disponible_sucursales)}</span></div>
     </div>
 
     <div class="status-buttons">
       <button class="btn-status btn-seleccionar" onclick="updateStatus('seleccionada')">SELECCIONAR</button>
-      <button class="btn-status btn-descartar" onclick="updateStatus('descartada')">DESCARTAR</button>
+      <button class="btn-status btn-descartar"   onclick="updateStatus('descartada')">DESCARTAR</button>
     </div>
     <div style="margin-top:16px;text-align:center;padding-top:16px;border-top:1px solid rgba(255,255,255,0.08)">
-      <button onclick="deleteModel()" style="background:transparent;border:1px solid #c0392b;color:#c0392b;font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;padding:10px 24px;width:100%;transition:all 0.3s">🗑 ELIMINAR PERFIL</button>
+      <button onclick="confirmDelete()" style="background:transparent;border:1px solid #c0392b;color:#c0392b;font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;padding:10px 24px;width:100%;transition:all 0.3s">🗑 ELIMINAR PERFIL</button>
     </div>
   `;
 
@@ -1584,27 +1722,64 @@ function closeModal() {
 }
 
 async function updateStatus(status) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/modelos?id=eq.${selectedModelId}`, {
-    method: 'PATCH',
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': SUPABASE_KEY,
-      'Authorization': `Bearer ${SUPABASE_KEY}`,
-      'Prefer': 'return=minimal'
-    },
-    body: JSON.stringify({ status })
-  });
-  if (res.ok) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/modelos?id=eq.${encodeURIComponent(selectedModelId)}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Prefer': 'return=minimal'
+      },
+      body: JSON.stringify({ status })
+    });
+    if (!res.ok) throw new Error();
     const m = allModels.find(x => x.id === selectedModelId);
     if (m) m.status = status;
     showToast(status === 'seleccionada' ? 'Modelo seleccionada ✓' : 'Modelo descartada');
     closeModal();
     filterModels();
+  } catch {
+    showToast('Error al actualizar. Intenta de nuevo.');
   }
 }
 
-// ─── PIN ────────────────────────────────────────────────────
-const ADMIN_PIN = "210281";
+// ─── CONFIRMACIÓN CUSTOM (reemplaza confirm()) ────────────────
+function showConfirm(msg, onOk) {
+  _confirmCallback = onOk;
+  document.getElementById('custom-confirm-msg').textContent = msg;
+  document.getElementById('custom-confirm').classList.add('show');
+}
+function confirmOk() {
+  document.getElementById('custom-confirm').classList.remove('show');
+  if (_confirmCallback) { _confirmCallback(); _confirmCallback = null; }
+}
+function confirmCancel() {
+  document.getElementById('custom-confirm').classList.remove('show');
+  _confirmCallback = null;
+}
+
+function confirmDelete() {
+  showConfirm('¿Eliminar este perfil permanentemente? Esta acción no se puede deshacer.', doDeleteModel);
+}
+
+async function doDeleteModel() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/modelos?id=eq.${encodeURIComponent(selectedModelId)}`, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    if (!res.ok) throw new Error();
+    allModels = allModels.filter(x => x.id !== selectedModelId);
+    showToast('Perfil eliminado');
+    closeModal();
+    filterModels();
+  } catch {
+    showToast('Error al eliminar. Intenta de nuevo.');
+  }
+}
+
+// ─── PIN CON SHA-256 ──────────────────────────────────────────
 let pinEntry = "";
 
 function showPinModal() {
@@ -1624,21 +1799,17 @@ function pinPress(digit) {
   pinEntry += digit;
   updatePinDots();
   if (pinEntry.length === 6) {
-    setTimeout(() => {
-      if (pinEntry === ADMIN_PIN) {
+    setTimeout(async () => {
+      const hash = await sha256(pinEntry);
+      if (hash === ADMIN_PIN_HASH) {
         closePinModal();
         openAdmin();
       } else {
-        // shake error
-        for (let i = 1; i <= 6; i++) {
-          document.getElementById("pd" + i).classList.add("error");
-        }
+        for (let i = 1; i <= 6; i++) document.getElementById("pd" + i).classList.add("error");
         setTimeout(() => {
           pinEntry = "";
           updatePinDots();
-          for (let i = 1; i <= 6; i++) {
-            document.getElementById("pd" + i).classList.remove("error");
-          }
+          for (let i = 1; i <= 6; i++) document.getElementById("pd" + i).classList.remove("error");
         }, 700);
       }
     }, 150);
@@ -1652,25 +1823,7 @@ function pinDelete() {
 
 function updatePinDots() {
   for (let i = 1; i <= 6; i++) {
-    const dot = document.getElementById("pd" + i);
-    dot.classList.toggle("filled", i <= pinEntry.length);
-  }
-}
-
-async function deleteModel() {
-  if (!confirm('¿Eliminar este perfil permanentemente?')) return;
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/modelos?id=eq.${selectedModelId}`, {
-    method: 'DELETE',
-    headers: {
-      'apikey': SUPABASE_KEY,
-      'Authorization': `Bearer ${SUPABASE_KEY}`
-    }
-  });
-  if (res.ok) {
-    allModels = allModels.filter(x => x.id !== selectedModelId);
-    showToast('Perfil eliminado');
-    closeModal();
-    filterModels();
+    document.getElementById("pd" + i).classList.toggle("filled", i <= pinEntry.length);
   }
 }
 
@@ -1685,7 +1838,7 @@ function showToast(msg) {
 <div class="pin-overlay" id="pin-overlay">
   <div class="pin-box">
     <div class="pin-title">Acceso</div>
-    <div class="pin-subtitle">Panel Mondou</div>
+    <div class="pin-subtitle">PANEL MONDOU</div>
     <div class="pin-dots">
       <div class="pin-dot" id="pd1"></div>
       <div class="pin-dot" id="pd2"></div>
