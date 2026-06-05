@@ -12,19 +12,19 @@
     --gold: #C9A84C;
     --gold-light: #E2C77A;
     --gold-dim: rgba(201,168,76,0.15);
-    --gold-border: rgba(201,168,76,0.3);
+    --gold-border: rgba(201,168,76,0.45);
     --white: #ffffff;
-    --gray: rgba(255,255,255,0.5);
+    --gray: rgba(255,255,255,0.8);
     --gray-dim: rgba(255,255,255,0.08);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
   html, body {
-    background: var(--black);
+    background: #0a0a0a;
     color: var(--white);
     font-family: 'Montserrat', sans-serif;
-    font-weight: 300;
+    font-weight: 400;
     min-height: 100vh;
     overflow-x: hidden;
   }
@@ -37,7 +37,7 @@
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
     pointer-events: none;
     z-index: 1000;
-    opacity: 0.4;
+    opacity: 0.12;
   }
 
   /* SCREENS */
@@ -143,10 +143,10 @@
   }
 
   .welcome-subtitle {
-    font-size: 11px;
-    font-weight: 300;
-    letter-spacing: 1px;
-    line-height: 1.9;
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    line-height: 2;
     color: var(--gray);
     margin-bottom: 48px;
   }
@@ -159,10 +159,10 @@
   }
 
   .welcome-note {
-    font-size: 10px;
-    letter-spacing: 0.5px;
+    font-size: 12px;
+    letter-spacing: 0.3px;
     line-height: 2;
-    color: rgba(255,255,255,0.3);
+    color: rgba(255,255,255,0.65);
     margin-bottom: 56px;
   }
 
@@ -174,9 +174,9 @@
     background: transparent;
     color: var(--gold);
     font-family: 'Montserrat', sans-serif;
-    font-size: 9px;
-    font-weight: 400;
-    letter-spacing: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 3px;
     text-transform: uppercase;
     cursor: pointer;
     transition: all 0.4s ease;
@@ -224,8 +224,8 @@
   }
 
   .step-label {
-    font-size: 8px;
-    letter-spacing: 4px;
+    font-size: 10px;
+    letter-spacing: 3px;
     color: var(--gold);
     text-transform: uppercase;
     margin-bottom: 24px;
@@ -233,18 +233,18 @@
 
   .step-title {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 32px;
-    font-weight: 300;
+    font-size: 36px;
+    font-weight: 400;
     letter-spacing: 2px;
     margin-bottom: 8px;
     line-height: 1.2;
   }
 
   .step-subtitle {
-    font-size: 10px;
+    font-size: 13px;
     color: var(--gray);
-    letter-spacing: 1px;
-    line-height: 1.8;
+    letter-spacing: 0.3px;
+    line-height: 1.9;
     margin-bottom: 40px;
   }
 
@@ -256,11 +256,12 @@
 
   .field-label {
     display: block;
-    font-size: 8px;
-    letter-spacing: 3px;
+    font-size: 10px;
+    letter-spacing: 2px;
     color: var(--gold);
     text-transform: uppercase;
     margin-bottom: 10px;
+    font-weight: 500;
   }
 
   .field-input {
@@ -271,15 +272,15 @@
     padding: 12px 0;
     color: var(--white);
     font-family: 'Montserrat', sans-serif;
-    font-size: 14px;
-    font-weight: 300;
-    letter-spacing: 0.5px;
+    font-size: 15px;
+    font-weight: 400;
+    letter-spacing: 0.3px;
     outline: none;
     transition: border-color 0.3s;
     -webkit-appearance: none;
   }
   .field-input:focus { border-color: var(--gold); }
-  .field-input::placeholder { color: rgba(255,255,255,0.2); font-size: 12px; }
+  .field-input::placeholder { color: rgba(255,255,255,0.35); font-size: 13px; }
   .field-input::-webkit-calendar-picker-indicator { filter: invert(1) opacity(0.4); }
 
   .field-input.error { border-color: #c0392b; }
@@ -307,13 +308,14 @@
     justify-content: center;
     padding: 12px 16px;
     border: 1px solid var(--gold-border);
-    font-size: 9px;
-    letter-spacing: 2px;
+    font-size: 11px;
+    letter-spacing: 1.5px;
     text-transform: uppercase;
     color: var(--gray);
     cursor: pointer;
     transition: all 0.3s;
     text-align: center;
+    font-weight: 400;
   }
 
   .radio-option input:checked + label {
@@ -345,10 +347,11 @@
     font-size: 14px; color: var(--gold);
   }
   .upload-label {
-    font-size: 9px;
-    letter-spacing: 2px;
+    font-size: 11px;
+    letter-spacing: 1.5px;
     color: var(--gray);
     text-transform: uppercase;
+    font-weight: 400;
   }
   .upload-preview {
     width: 60px; height: 60px;
@@ -399,11 +402,11 @@
   .checkbox-box.checked .checkbox-check { display: block; }
 
   .checkbox-text {
-    font-size: 11px;
-    font-weight: 300;
-    letter-spacing: 0.5px;
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 0.3px;
     line-height: 1.8;
-    color: rgba(255,255,255,0.7);
+    color: rgba(255,255,255,0.9);
   }
 
   /* NAV BUTTONS */
@@ -461,10 +464,10 @@
   }
 
   .success-text {
-    font-size: 11px;
+    font-size: 14px;
     line-height: 2;
     color: var(--gray);
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
     margin-bottom: 48px;
     max-width: 320px;
   }
@@ -588,12 +591,12 @@
   }
 
   .model-tag {
-    font-size: 8px;
-    letter-spacing: 1.5px;
-    color: rgba(255,255,255,0.4);
+    font-size: 10px;
+    letter-spacing: 1px;
+    color: rgba(255,255,255,0.65);
     text-transform: uppercase;
   }
-  .model-tag span { color: rgba(255,255,255,0.7); }
+  .model-tag span { color: rgba(255,255,255,0.95); font-weight: 500; }
 
   /* MODEL DETAIL MODAL */
   .modal-overlay {
@@ -680,8 +683,8 @@
     border-bottom: 1px solid rgba(255,255,255,0.04);
   }
 
-  .modal-key { font-size: 9px; letter-spacing: 1px; color: var(--gray); }
-  .modal-val { font-size: 11px; font-weight: 300; color: var(--white); }
+  .modal-key { font-size: 11px; letter-spacing: 0.5px; color: var(--gray); font-weight: 400; }
+  .modal-val { font-size: 13px; font-weight: 500; color: var(--white); }
 
   .status-buttons {
     display: flex;
