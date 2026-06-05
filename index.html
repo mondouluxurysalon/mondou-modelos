@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -332,9 +331,11 @@
     transition: all 0.3s;
     position: relative;
     margin-top: 4px;
-    display: block;
   }
   .upload-area:hover { border-color: var(--gold); background: var(--gold-dim); }
+  .upload-area input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
   .upload-icon {
     width: 24px; height: 24px;
     border: 1px solid var(--gold-border);
@@ -649,11 +650,13 @@
   }
 
   .modal-photo {
-    width: 100px; height: 130px;
+    width: 160px; height: 210px;
     object-fit: cover;
     border: 1px solid var(--gold-border);
     flex-shrink: 0;
+    cursor: pointer;
   }
+  .modal-photo:hover { border-color: var(--gold); }
 
   .modal-section {
     margin-bottom: 24px;
@@ -1003,12 +1006,12 @@
       </div>
       <div class="field">
         <label class="field-label">Captura de estadísticas</label>
-        <div class="upload-area" onclick="document.getElementById('upload-stats').click()">
-          <input type="file" id="upload-stats" accept="image/*" style="display:none" onchange="previewImage(this,'prev-stats')">
+        <label class="upload-area" for="upload-stats">
+          <input type="file" id="upload-stats" accept="image/*" onchange="previewImage(this,'prev-stats')" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">
           <div class="upload-icon">+</div>
           <div class="upload-label">Subir captura</div>
           <img class="upload-preview" id="prev-stats">
-        </div>
+        </label>
       </div>
     </div>
 
@@ -1028,31 +1031,31 @@
 
     <div class="field">
       <label class="field-label">Fotografía frontal</label>
-      <div class="upload-area" onclick="document.getElementById('upload-frontal').click()">
-        <input type="file" id="upload-frontal" accept="image/*" style="display:none" onchange="previewImage(this,'prev-frontal')">
+      <label class="upload-area" for="upload-frontal">
+        <input type="file" id="upload-frontal" accept="image/*" onchange="previewImage(this,'prev-frontal')" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">
         <div class="upload-icon">+</div>
         <div class="upload-label">Subir foto frontal</div>
         <img class="upload-preview" id="prev-frontal">
-      </div>
+      </label>
       <div class="field-error" id="err-frontal">Esta foto es requerida</div>
     </div>
     <div class="field">
       <label class="field-label">Fotografía lateral</label>
-      <div class="upload-area" onclick="document.getElementById('upload-lateral').click()">
-        <input type="file" id="upload-lateral" accept="image/*" style="display:none" onchange="previewImage(this,'prev-lateral')">
+      <label class="upload-area" for="upload-lateral">
+        <input type="file" id="upload-lateral" accept="image/*" onchange="previewImage(this,'prev-lateral')" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">
         <div class="upload-icon">+</div>
         <div class="upload-label">Subir foto lateral</div>
         <img class="upload-preview" id="prev-lateral">
-      </div>
+      </label>
     </div>
     <div class="field">
       <label class="field-label">Fotografía de tu cabello actual</label>
-      <div class="upload-area" onclick="document.getElementById('upload-cabello').click()">
-        <input type="file" id="upload-cabello" accept="image/*" style="display:none" onchange="previewImage(this,'prev-cabello')">
+      <label class="upload-area" for="upload-cabello">
+        <input type="file" id="upload-cabello" accept="image/*" onchange="previewImage(this,'prev-cabello')" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">
         <div class="upload-icon">+</div>
         <div class="upload-label">Subir foto de cabello</div>
         <img class="upload-preview" id="prev-cabello">
-      </div>
+      </label>
     </div>
 
     <div class="field">
@@ -1269,6 +1272,10 @@ let currentStep = 0;
 let allModels = [];
 let selectedModelId = null;
 
+function esc(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 // ─── NAVIGATION ───────────────────────────────────────────────
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
@@ -1333,8 +1340,10 @@ function validateStep2() {
 
 function validateStep3() {
   const frontal = document.getElementById('upload-frontal').files[0];
+  const largo = document.getElementById('largo_cabello').value;
   showErr('frontal', !frontal);
-  if (frontal) goToStep(4);
+  if (frontal && largo) goToStep(4);
+  else if (!largo) showToast('Selecciona el largo de tu cabello');
 }
 
 // ─── UI HELPERS ───────────────────────────────────────────────
@@ -1345,6 +1354,17 @@ function toggleContenido(val) {
 function previewImage(input, previewId) {
   const file = input.files[0];
   if (!file) return;
+  // Validate type and size (max 15 MB)
+  if (!file.type.startsWith('image/')) {
+    showToast('El archivo debe ser una imagen');
+    input.value = '';
+    return;
+  }
+  if (file.size > 15 * 1024 * 1024) {
+    showToast('La imagen no debe superar 15 MB');
+    input.value = '';
+    return;
+  }
   const reader = new FileReader();
   reader.onload = e => {
     const img = document.getElementById(previewId);
@@ -1361,15 +1381,24 @@ function toggleCheck(id) {
 // ─── UPLOAD FILE TO SUPABASE ──────────────────────────────────
 async function uploadFile(file, path) {
   if (!file) return null;
-  const formData = new FormData();
-  formData.append('', file);
-  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/modelos-fotos/${path}`, {
+  // Preserve the actual file extension instead of hardcoding .jpg
+  const ext = file.name.split('.').pop().toLowerCase() || 'jpg';
+  const actualPath = path.replace(/\.jpg$/, `.${ext}`);
+  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/modelo-fotos/${actualPath}`, {
     method: 'POST',
-    headers: { 'Authorization': `Bearer ${SUPABASE_KEY}` },
-    body: formData
+    headers: {
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'apikey': SUPABASE_KEY,
+      'Content-Type': file.type || 'image/jpeg',
+      'x-upsert': 'false'
+    },
+    body: file
   });
-  if (!res.ok) return null;
-  return `${SUPABASE_URL}/storage/v1/object/public/modelos-fotos/${path}`;
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `Upload failed ${res.status}`);
+  }
+  return `${SUPABASE_URL}/storage/v1/object/public/modelo-fotos/${actualPath}`;
 }
 
 // ─── SUBMIT ───────────────────────────────────────────────────
@@ -1395,6 +1424,9 @@ async function submitForm() {
       uploadFile(document.getElementById('upload-cabello').files[0], `${uid}-${slug}-cabello.jpg`),
       uploadFile(document.getElementById('upload-stats').files[0], `${uid}-${slug}-stats.jpg`)
     ]);
+
+    // Required photo must have uploaded successfully
+    if (!fFrontal) throw new Error('No se pudo subir la foto frontal');
 
     const contenido = document.querySelector('input[name="contenido"]:checked')?.value || '';
     const extensiones = document.querySelector('input[name="extensiones"]:checked')?.value || '';
@@ -1463,12 +1495,18 @@ async function loadModels() {
       <div class="loading-dot"></div><div class="loading-dot"></div><div class="loading-dot"></div>
     </div>`;
 
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/modelos?select=*&order=created_at.desc`, {
-    headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-  });
-  allModels = await res.json();
-  populateCityFilter();
-  renderModels(allModels);
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/modelos?select=*&order=created_at.desc`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    if (!res.ok) throw new Error(`Error ${res.status}`);
+    allModels = await res.json();
+    populateCityFilter();
+    renderModels(allModels);
+  } catch(e) {
+    document.getElementById('models-grid').innerHTML =
+      '<div class="empty-state">No se pudo cargar la lista.<br>Verifica tu conexión e intenta de nuevo.</div>';
+  }
 }
 
 function populateCityFilter() {
@@ -1504,16 +1542,16 @@ function renderModels(models) {
   }
 
   grid.innerHTML = models.map(m => `
-    <div class="model-card" onclick="openModel('${m.id}')">
+    <div class="model-card" onclick="openModel('${esc(m.id)}')">
       <div class="model-card-header">
-        <div class="model-name">${m.nombre || '—'}</div>
-        <div class="model-status status-${m.status || 'pendiente'}">${m.status || 'pendiente'}</div>
+        <div class="model-name">${esc(m.nombre) || '—'}</div>
+        <div class="model-status status-${esc(m.status) || 'pendiente'}">${esc(m.status) || 'pendiente'}</div>
       </div>
       <div class="model-meta">
-        <div class="model-tag">Ciudad: <span>${m.ciudad || '—'}</span></div>
-        <div class="model-tag">Cabello: <span>${m.largo_cabello || '—'}</span></div>
-        ${m.crea_contenido === 'Sí' ? `<div class="model-tag">IG: <span>${m.seguidores_instagram || '—'} seg.</span></div>` : ''}
-        <div class="model-tag">Contenido: <span>${m.crea_contenido || '—'}</span></div>
+        <div class="model-tag">Ciudad: <span>${esc(m.ciudad) || '—'}</span></div>
+        <div class="model-tag">Cabello: <span>${esc(m.largo_cabello) || '—'}</span></div>
+        ${m.crea_contenido === 'Sí' ? `<div class="model-tag">IG: <span>${esc(m.seguidores_instagram) || '—'} seg.</span></div>` : ''}
+        <div class="model-tag">Contenido: <span>${esc(m.crea_contenido) || '—'}</span></div>
       </div>
     </div>
   `).join('');
@@ -1527,52 +1565,49 @@ function openModel(id) {
   const photos = [m.foto_frontal_url, m.foto_lateral_url, m.foto_cabello_url].filter(Boolean);
 
   document.getElementById('modal-content').innerHTML = `
-    <div class="modal-name">${m.nombre || '—'}</div>
-    <div class="modal-city">${m.ciudad || '—'}</div>
+    <div class="modal-name">${esc(m.nombre) || '—'}</div>
+    <div class="modal-city">${esc(m.ciudad) || '—'}</div>
 
     ${photos.length ? `
     <div class="modal-photos">
-      ${photos.map(p => `<img class="modal-photo" src="${p}" loading="lazy">`).join('')}
+      ${photos.map(p => `<img class="modal-photo" src="${esc(p)}" loading="lazy" onclick="window.open('${esc(p)}','_blank')" title="Ver en tamaño completo">`).join('')}
     </div>` : ''}
 
     <div class="modal-section">
       <div class="modal-section-title">Información Personal</div>
-      <div class="modal-row"><span class="modal-key">Teléfono</span><span class="modal-val">${m.telefono || '—'}</span></div>
-      <div class="modal-row"><span class="modal-key">Correo</span><span class="modal-val" style="font-size:10px">${m.correo || '—'}</span></div>
-      <div class="modal-row"><span class="modal-key">Nacimiento</span><span class="modal-val">${m.fecha_nacimiento || '—'}</span></div>
+      <div class="modal-row"><span class="modal-key">Teléfono</span><span class="modal-val">${esc(m.telefono) || '—'}</span></div>
+      <div class="modal-row"><span class="modal-key">Correo</span><span class="modal-val" style="font-size:10px">${esc(m.correo) || '—'}</span></div>
+      <div class="modal-row"><span class="modal-key">Nacimiento</span><span class="modal-val">${esc(m.fecha_nacimiento) || '—'}</span></div>
     </div>
 
     <div class="modal-section">
       <div class="modal-section-title">Redes Sociales</div>
-      <div class="modal-row"><span class="modal-key">Instagram</span><span class="modal-val">${m.instagram || '—'}</span></div>
-      <div class="modal-row"><span class="modal-key">TikTok</span><span class="modal-val">${m.tiktok || '—'}</span></div>
-      <div class="modal-row"><span class="modal-key">Crea contenido</span><span class="modal-val">${m.crea_contenido || '—'}</span></div>
+      <div class="modal-row"><span class="modal-key">Instagram</span><span class="modal-val">${esc(m.instagram) || '—'}</span></div>
+      <div class="modal-row"><span class="modal-key">TikTok</span><span class="modal-val">${esc(m.tiktok) || '—'}</span></div>
+      <div class="modal-row"><span class="modal-key">Crea contenido</span><span class="modal-val">${esc(m.crea_contenido) || '—'}</span></div>
       ${m.crea_contenido === 'Sí' ? `
-      <div class="modal-row"><span class="modal-key">Seg. Instagram</span><span class="modal-val">${m.seguidores_instagram || '—'}</span></div>
-      <div class="modal-row"><span class="modal-key">Seg. TikTok</span><span class="modal-val">${m.seguidores_tiktok || '—'}</span></div>` : ''}
+      <div class="modal-row"><span class="modal-key">Seg. Instagram</span><span class="modal-val">${esc(m.seguidores_instagram) || '—'}</span></div>
+      <div class="modal-row"><span class="modal-key">Seg. TikTok</span><span class="modal-val">${esc(m.seguidores_tiktok) || '—'}</span></div>` : ''}
     </div>
 
     <div class="modal-section">
       <div class="modal-section-title">Cabello</div>
-      <div class="modal-row"><span class="modal-key">Largo</span><span class="modal-val">${m.largo_cabello || '—'}</span></div>
-      <div class="modal-row"><span class="modal-key">Color</span><span class="modal-val">${m.color_cabello || '—'}</span></div>
-      <div class="modal-row"><span class="modal-key">Extensiones</span><span class="modal-val">${m.uso_extensiones || '—'}</span></div>
-      <div class="modal-row"><span class="modal-key">Transformación</span><span class="modal-val">${m.abierta_transformacion || '—'}</span></div>
+      <div class="modal-row"><span class="modal-key">Largo</span><span class="modal-val">${esc(m.largo_cabello) || '—'}</span></div>
+      <div class="modal-row"><span class="modal-key">Color</span><span class="modal-val">${esc(m.color_cabello) || '—'}</span></div>
+      <div class="modal-row"><span class="modal-key">Extensiones</span><span class="modal-val">${esc(m.uso_extensiones) || '—'}</span></div>
+      <div class="modal-row"><span class="modal-key">Transformación</span><span class="modal-val">${esc(m.abierta_transformacion) || '—'}</span></div>
     </div>
 
     <div class="modal-section">
       <div class="modal-section-title">Disponibilidad</div>
-      <div class="modal-row"><span class="modal-key">Entre semana</span><span class="modal-val">${m.disponible_semana || '—'}</span></div>
-      <div class="modal-row"><span class="modal-key">Foto / Video</span><span class="modal-val">${m.disponible_foto_video || '—'}</span></div>
-      <div class="modal-row"><span class="modal-key">Sucursales</span><span class="modal-val">${m.disponible_sucursales || '—'}</span></div>
+      <div class="modal-row"><span class="modal-key">Entre semana</span><span class="modal-val">${esc(m.disponible_semana) || '—'}</span></div>
+      <div class="modal-row"><span class="modal-key">Foto / Video</span><span class="modal-val">${esc(m.disponible_foto_video) || '—'}</span></div>
+      <div class="modal-row"><span class="modal-key">Sucursales</span><span class="modal-val">${esc(m.disponible_sucursales) || '—'}</span></div>
     </div>
 
     <div class="status-buttons">
       <button class="btn-status btn-seleccionar" onclick="updateStatus('seleccionada')">SELECCIONAR</button>
       <button class="btn-status btn-descartar" onclick="updateStatus('descartada')">DESCARTAR</button>
-    </div>
-    <div style="margin-top:16px;text-align:center;padding-top:16px;border-top:1px solid rgba(255,255,255,0.08)">
-      <button onclick="deleteModel()" style="background:transparent;border:1px solid #c0392b;color:#c0392b;font-family:'Montserrat',sans-serif;font-size:8px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;padding:10px 24px;width:100%;transition:all 0.3s">🗑 ELIMINAR PERFIL</button>
     </div>
   `;
 
@@ -1654,23 +1689,6 @@ function updatePinDots() {
   for (let i = 1; i <= 6; i++) {
     const dot = document.getElementById("pd" + i);
     dot.classList.toggle("filled", i <= pinEntry.length);
-  }
-}
-
-async function deleteModel() {
-  if (!confirm('¿Eliminar este perfil permanentemente?')) return;
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/modelos?id=eq.${selectedModelId}`, {
-    method: 'DELETE',
-    headers: {
-      'apikey': SUPABASE_KEY,
-      'Authorization': `Bearer ${SUPABASE_KEY}`
-    }
-  });
-  if (res.ok) {
-    allModels = allModels.filter(x => x.id !== selectedModelId);
-    showToast('Perfil eliminado');
-    closeModal();
-    filterModels();
   }
 }
 
