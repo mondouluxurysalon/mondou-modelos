@@ -1043,15 +1043,6 @@
       <div class="field-error" id="err-frontal">Esta foto es requerida</div>
     </div>
     <div class="field">
-      <label class="field-label">Fotografía lateral</label>
-      <label class="upload-area" for="upload-lateral">
-        <input type="file" id="upload-lateral" accept="image/*" onchange="previewImage(this,'prev-lateral')" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">
-        <div class="upload-icon">+</div>
-        <div class="upload-label">Subir foto lateral</div>
-        <img class="upload-preview" id="prev-lateral">
-      </label>
-    </div>
-    <div class="field">
       <label class="field-label">Fotografía de tu cabello actual</label>
       <label class="upload-area" for="upload-cabello">
         <input type="file" id="upload-cabello" accept="image/*" onchange="previewImage(this,'prev-cabello')" style="position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%">
@@ -1421,9 +1412,8 @@ async function submitForm() {
     const nombre = document.getElementById('nombre').value.trim();
     const slug = nombre.replace(/\s+/g,'-').toLowerCase();
 
-    const [fFrontal, fLateral, fCabello, fStats] = await Promise.all([
+    const [fFrontal, fCabello, fStats] = await Promise.all([
       uploadFile(document.getElementById('upload-frontal').files[0], `${uid}-${slug}-frontal.jpg`),
-      uploadFile(document.getElementById('upload-lateral').files[0], `${uid}-${slug}-lateral.jpg`),
       uploadFile(document.getElementById('upload-cabello').files[0], `${uid}-${slug}-cabello.jpg`),
       uploadFile(document.getElementById('upload-stats').files[0], `${uid}-${slug}-stats.jpg`)
     ]);
@@ -1458,7 +1448,6 @@ async function submitForm() {
       disponible_foto_video: fotovideo,
       disponible_sucursales: sucursales,
       foto_frontal_url: fFrontal,
-      foto_lateral_url: fLateral,
       foto_cabello_url: fCabello,
       foto_estadisticas_url: fStats,
       status: 'pendiente'
@@ -1565,7 +1554,7 @@ function openModel(id) {
   const m = allModels.find(x => x.id === id);
   if (!m) return;
 
-  const photos = [m.foto_frontal_url, m.foto_lateral_url, m.foto_cabello_url].filter(Boolean);
+  const photos = [m.foto_frontal_url, m.foto_cabello_url].filter(Boolean);
 
   document.getElementById('modal-content').innerHTML = `
     <div class="modal-name">${esc(m.nombre) || '—'}</div>
