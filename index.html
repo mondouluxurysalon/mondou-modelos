@@ -1412,7 +1412,10 @@ async function submitForm() {
   try {
     const uid = Date.now();
     const nombre = document.getElementById('nombre').value.trim();
-    const slug = nombre.replace(/\s+/g,'-').toLowerCase();
+    const slug = nombre
+      .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]/gi, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
+      .toLowerCase();
 
     const [fFrontal, fCabello, fStats] = await Promise.all([
       uploadFile(document.getElementById('upload-frontal').files[0], `${uid}-${slug}-frontal.jpg`),
