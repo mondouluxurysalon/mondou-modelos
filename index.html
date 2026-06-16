@@ -1375,22 +1375,24 @@ function toggleCheck(id) {
 // ─── UPLOAD FILE TO SUPABASE ──────────────────────────────────
 async function uploadFile(file, path) {
   if (!file) return null;
-  // Preserve the actual file extension instead of hardcoding .jpg
+  // Use actual extension; iOS HEIC files are treated as jpeg for compatibility
   const ext = file.name.split('.').pop().toLowerCase() || 'jpg';
-  const actualPath = path.replace(/\.jpg$/, `.${ext}`);
+  const safeExt = ['heic','heif'].includes(ext) ? 'jpg' : ext;
+  const contentType = ['heic','heif'].includes(ext) ? 'image/jpeg' : (file.type || 'image/jpeg');
+  const actualPath = path.replace(/\.jpg$/, `.${safeExt}`);
   const res = await fetch(`${SUPABASE_URL}/storage/v1/object/modelo-fotos/${actualPath}`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${SUPABASE_KEY}`,
       'apikey': SUPABASE_KEY,
-      'Content-Type': file.type || 'image/jpeg',
-      'x-upsert': 'false'
+      'Content-Type': contentType,
+      'x-upsert': 'true'
     },
     body: file
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || `Upload failed ${res.status}`);
+    throw new Error(err.message || `Error subiendo foto (${res.status})`);
   }
   return `${SUPABASE_URL}/storage/v1/object/public/modelo-fotos/${actualPath}`;
 }
@@ -1464,11 +1466,15 @@ async function submitForm() {
       body: JSON.stringify(payload)
     });
 
-    if (!res.ok) throw new Error('Error al guardar');
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}));
+      throw new Error(errBody.message || `Error al guardar (${res.status})`);
+    }
     showScreen('screen-success');
 
   } catch(e) {
-    showToast('Ocurrió un error. Intenta de nuevo.');
+    console.error('SUBMIT_ERROR:', e.message);
+    showToast(e.message || 'Ocurrió un error. Intenta de nuevo.');
     btn.textContent = 'ENVIAR SOLICITUD';
     btn.style.opacity = '1';
     btn.disabled = false;
